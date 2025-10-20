@@ -9,41 +9,45 @@ import {
   TouchableOpacity,
   FlatList,
   Image,
-  ImageSourcePropType, // <-- Đã import
+  ImageSourcePropType,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+// Bỏ useNavigation vì đã nhận từ props
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CategoryIcon from "../components/CategoryIcon";
 import ProductCard from "../components/ProductCard";
-// import SearchBar from "../components/SearchBar";
+import SearchBar from "../components/SearchBar";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 
-// Dữ liệu categories
+// Dữ liệu categories (Cập nhật targetScreen)
 const categories = [
   {
     id: "1",
     name: "Electronics",
     color: "#8A2BE2",
     image: require("../assets/img/electronics.png"),
+    targetScreen: "ProductList", // <-- List View
   },
   {
     id: "2",
     name: "Fashion",
     color: "#4682B4",
     image: require("../assets/img/fashion.png"),
+    targetScreen: "ProductList", // <-- List View
   },
   {
     id: "3",
     name: "Beauty",
     color: "#FF6347",
     image: require("../assets/img/beauty.png"),
+    targetScreen: "ProductGrid", // <-- Grid View
   },
   {
     id: "4",
     name: "Fresh Fruits",
     color: "#DC143C",
     image: require("../assets/img/fresh.png"),
+    targetScreen: "ProductGrid", // <-- Grid View
   },
 ];
 
@@ -56,7 +60,7 @@ interface RecommendedProduct {
   image: ImageSourcePropType;
 }
 
-// Dữ liệu sản phẩm (Đã gán Type)
+// Dữ liệu sản phẩm (Giữ nguyên)
 const recommendedProducts: RecommendedProduct[] = [
   {
     id: "a",
@@ -83,12 +87,16 @@ const recommendedProducts: RecommendedProduct[] = [
 
 // @ts-ignore
 const HomeScreen: React.FC = ({ navigation }) => {
-  // const navigation = useNavigation(); // Không cần dùng hook nữa nếu props có sẵn
+  // Hàm xử lý điều hướng
+  const handleCategoryPress = (item: any) => {
+    // Điều hướng đến màn hình đích và gửi 'categoryName'
+    navigation.navigate(item.targetScreen, { categoryName: item.name });
+  };
 
   return (
     <SafeAreaView style={globalStyles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-        {/* Header (Sử dụng style chung) */}
+        {/* Header */}
         <View style={globalStyles.header}>
           <Text style={globalStyles.headerTitle}>All Deals</Text>
           <View style={globalStyles.headerIconContainer}>
@@ -106,18 +114,15 @@ const HomeScreen: React.FC = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Search Bar (Dùng component) */}
-        {/* <SearchBar /> */}
+        {/* Search Bar */}
+        <SearchBar />
 
-        {/* Categories */}
+        {/* Categories (Cập nhật onPress) */}
         <FlatList
           data={categories}
           renderItem={({ item }) => (
-            // THÊM TouchableOpacity ĐỂ CHUYỂN TRANG
             <TouchableOpacity
-              onPress={() =>
-                navigation.navigate("ProductList", { categoryName: item.name })
-              }
+              onPress={() => handleCategoryPress(item)} // <-- Dùng hàm điều hướng
             >
               <CategoryIcon
                 name={item.name}
@@ -132,7 +137,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
           contentContainerStyle={styles.categoryList}
         />
 
-        {/* Main Deal Banner (Shoes) */}
+        {/* ... (Các Banner giữ nguyên) ... */}
         <View style={styles.mainBanner}>
           <View style={styles.bannerTextContainer}>
             <Text style={styles.bannerTitle}>Shoes</Text>
@@ -148,7 +153,6 @@ const HomeScreen: React.FC = ({ navigation }) => {
           />
         </View>
 
-        {/* Small Deal Banners */}
         <View style={styles.smallBannersContainer}>
           <View style={styles.smallBanner}>
             <Text style={styles.discountBadge}>30%</Text>
@@ -166,7 +170,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
           </View>
         </View>
 
-        {/* Recommended for you (Sử dụng style chung) */}
+        {/* Recommended for you */}
         <View style={styles.recommendedHeader}>
           <Text style={globalStyles.sectionTitle}>Recommended for you</Text>
           <TouchableOpacity>
@@ -196,7 +200,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
   );
 };
 
-// StyleSheet của HomeScreen (chỉ chứa style riêng)
+// ... (Styles của HomeScreen giữ nguyên)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
