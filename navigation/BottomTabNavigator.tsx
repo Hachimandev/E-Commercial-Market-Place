@@ -5,14 +5,15 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
-// import ProductListScreen from "../screens/ProductListScreen";
+import ProductListScreen from "../screens/ProductListScreen"; // <-- Tên mới (List View)
+import ProductGridScreen from "../screens/ProductGridScreen"; // <-- Tên mới (Grid View)
 import { Text, View, StyleSheet } from "react-native";
 import { COLORS } from "../constants/styles";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Component cho các màn hình chưa làm
+// Component cho các màn hình chưa làm (Giữ nguyên)
 const PlaceholderScreen = ({ route }: { route: any }) => (
   <View style={placeholderStyles.container}>
     <Text style={placeholderStyles.text}>{route.params.name} Screen</Text>
@@ -27,42 +28,36 @@ const placeholderStyles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#f0f0f0",
   },
-  text: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#555",
-  },
-  subtext: {
-    fontSize: 16,
-    color: "#888",
-    marginTop: 8,
-  },
+  text: { fontSize: 24, fontWeight: "bold", color: "#555" },
+  subtext: { fontSize: 16, color: "#888", marginTop: 8 },
 });
 
-// Stack cho Tab Home (để chuyển từ Home -> ProductList)
+// Stack cho Tab Home (Cập nhật)
 function HomeStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false, // Ẩn header của stack, vì chúng ta tự tạo header
+        headerShown: false,
       }}
     >
       <Stack.Screen name="Home" component={HomeScreen} />
-      {/* <Stack.Screen name="ProductList" component={ProductListScreen} /> */}
+      {/* CẬP NHẬT TÊN MÀN HÌNH ĐÍCH */}
+      <Stack.Screen name="ProductList" component={ProductListScreen} />
+      <Stack.Screen name="ProductGrid" component={ProductGridScreen} />
     </Stack.Navigator>
   );
 }
 
-// Cấu hình Tab Bar chính
+// Cấu hình Tab Bar chính (Giữ nguyên)
 export default function BottomTabNavigator() {
   return (
     <Tab.Navigator
       initialRouteName="HomeTab"
       screenOptions={({ route }) => ({
-        tabBarActiveTintColor: COLORS.primary, // Dùng màu từ global
+        tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: "gray",
         headerShown: false,
-        tabBarShowLabel: true, // Hiển thị tên
+        tabBarShowLabel: true,
         tabBarStyle: {
           paddingBottom: 5,
           paddingTop: 5,
@@ -124,14 +119,14 @@ export default function BottomTabNavigator() {
         },
       })}
     >
-      {/* Thay HomeScreen bằng HomeStack */}
+      {/* HomeTab (giữ nguyên) */}
       <Tab.Screen
         name="HomeTab"
         component={HomeStack}
         options={{ title: "Home" }}
       />
 
-      {/* Các tab khác dùng PlaceholderScreen */}
+      {/* Các tab khác (giữ nguyên) */}
       <Tab.Screen
         name="SearchTab"
         component={PlaceholderScreen}
