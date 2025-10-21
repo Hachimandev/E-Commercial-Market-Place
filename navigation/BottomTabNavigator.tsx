@@ -9,6 +9,8 @@ import ProductListScreen from "../screens/ProductListScreen"; // <-- Tên mới 
 import ProductGridScreen from "../screens/ProductGridScreen"; // <-- Tên mới (Grid View)
 import { Text, View, StyleSheet } from "react-native";
 import { COLORS } from "../constants/styles";
+import ProductDetailGeneralScreen from "../screens/ProductDetailGeneralScreen";
+import ProductDetailVariantScreen from "../screens/ProductDetailVariantScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -44,6 +46,14 @@ function HomeStack() {
       {/* CẬP NHẬT TÊN MÀN HÌNH ĐÍCH */}
       <Stack.Screen name="ProductList" component={ProductListScreen} />
       <Stack.Screen name="ProductGrid" component={ProductGridScreen} />
+      <Stack.Screen
+        name="ProductDetailGeneral"
+        component={ProductDetailGeneralScreen}
+      />
+      <Stack.Screen
+        name="ProductDetailVariant"
+        component={ProductDetailVariantScreen}
+      />
     </Stack.Navigator>
   );
 }

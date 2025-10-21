@@ -13,15 +13,15 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SIZES, globalStyles } from "../constants/styles";
 
-// Tính toán chiều rộng cho 2 cột
 const { width } = Dimensions.get("window");
-const cardWidth = (width - SIZES.padding * 3) / 2; // (Tổng rộng - padding 2 bên - padding giữa) / 2
+const cardWidth = (width - SIZES.padding * 3) / 2;
 
 interface ProductGridItemProps {
   imageSource: ImageSourcePropType;
   name: string;
   rating: number;
   price: number;
+  onPress?: () => void; // <-- THÊM PROP ONPRESS
 }
 
 const ProductGridItem: React.FC<ProductGridItemProps> = ({
@@ -29,9 +29,15 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({
   name,
   rating,
   price,
+  onPress, // <-- NHẬN PROP
 }) => {
   return (
-    <TouchableOpacity style={[styles.card, globalStyles.shadow]}>
+    <TouchableOpacity
+      style={[styles.card, globalStyles.shadow]}
+      onPress={onPress}
+    >
+      {" "}
+      {/* <-- SỬ DỤNG ONPRESS */}
       <View style={styles.imageContainer}>
         <Image
           source={imageSource}
@@ -64,6 +70,7 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({
   );
 };
 
+// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   card: {
     width: cardWidth,
@@ -71,7 +78,7 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.padding,
   },
   imageContainer: {
-    backgroundColor: "#FAFAFA", // Nền xám nhạt cho ảnh
+    backgroundColor: "#FAFAFA",
     borderTopLeftRadius: SIZES.radius,
     borderTopRightRadius: SIZES.radius,
     alignItems: "center",

@@ -19,10 +19,11 @@ import ProductGridItem from "../components/ProductGridItem";
 import ProductCard from "../components/ProductCard";
 
 // === DỮ LIỆU GIẢ ĐỊNH ===
+// Thêm 'detailScreen' vào sản phẩm
 const MOCK_DATA = {
   "Fresh Fruits": {
     banner: {
-      image: require("../assets/img/melon.png"),
+      uri: "https://images.unsplash.com/photo-1543083477-4f785aeafaa9?q=80&w=2070",
     },
     products: [
       {
@@ -31,28 +32,16 @@ const MOCK_DATA = {
         rating: 4,
         price: 10,
         image: require("../assets/img/pear.png"),
-      },
+        detailScreen: "ProductDetailGeneral",
+      }, // <-- Thêm
       {
         id: "b",
         name: "Avocado",
         rating: 5,
         price: 4,
         image: require("../assets/img/fresh.png"),
-      },
-      {
-        id: "c",
-        name: "Cherry",
-        rating: 5,
-        price: 10,
-        image: require("../assets/img/cherry.png"),
-      },
-      {
-        id: "d",
-        name: "Orange",
-        rating: 4,
-        price: 7,
-        image: require("../assets/img/orange.png"),
-      },
+        detailScreen: "ProductDetailGeneral",
+      }, // <-- Thêm
     ],
     relevantProducts: [
       {
@@ -62,18 +51,11 @@ const MOCK_DATA = {
         price: 15,
         image: require("../assets/img/peach.png"),
       },
-      {
-        id: "f",
-        name: "Pomegranate",
-        rating: 4.5,
-        price: 23,
-        image: require("../assets/img/pomegranate.png"),
-      },
     ],
   },
   Beauty: {
     banner: {
-      image: require("../assets/img/beauty.png"),
+      uri: "https://images.unsplash.com/photo-1556228720-19b0672b2a0d?q=80&w=2070",
     },
     products: [
       {
@@ -82,21 +64,16 @@ const MOCK_DATA = {
         rating: 4,
         price: 25,
         image: require("../assets/img/lipstick.png"),
-      },
+        detailScreen: "ProductDetailVariant",
+      }, // <-- Thêm
       {
         id: "b",
         name: "Foundation",
         rating: 5,
         price: 40,
         image: require("../assets/img/foundation.png"),
-      },
-      {
-        id: "c",
-        name: "Mascara",
-        rating: 4,
-        price: 18,
-        image: require("../assets/img/mascara.png"),
-      },
+        detailScreen: "ProductDetailVariant",
+      }, // <-- Thêm
     ],
     relevantProducts: [
       {
@@ -116,15 +93,17 @@ interface GridProduct {
   rating: number;
   price: number;
   image: ImageSourcePropType;
+  detailScreen: string; // <-- Thêm type
 }
 
 // @ts-ignore
 const ProductGridScreen = ({ route, navigation }) => {
-  const { categoryName } = route.params; // "Fresh Fruits" hoặc "Beauty"
+  const { categoryName } = route.params;
 
   // @ts-ignore
   const data = MOCK_DATA[categoryName] || MOCK_DATA["Fresh Fruits"];
 
+  // Header (Giữ nguyên)
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -158,23 +137,30 @@ const ProductGridScreen = ({ route, navigation }) => {
             <View style={{ paddingHorizontal: SIZES.padding }}>
               <SearchBar />
             </View>
-
+            {/* Banner (Giữ nguyên) */}
             <View style={styles.bannerContainer}>
               <Image
-                source={data.banner.image} // <-- Dùng dữ liệu động
+                source={data.banner}
                 style={styles.bannerImage}
                 resizeMode="cover"
               />
             </View>
           </>
         }
-        data={data.products} // <-- Dùng dữ liệu động
+        data={data.products}
         renderItem={({ item }) => (
+          // CẬP NHẬT RENDERITEM ĐỂ THÊM ONPRESS
           <ProductGridItem
             name={item.name}
             rating={item.rating}
             price={item.price}
             imageSource={item.image}
+            onPress={() =>
+              navigation.navigate(item.detailScreen, {
+                productId: item.id,
+                name: item.name, // Gửi tên qua
+              })
+            }
           />
         )}
         keyExtractor={(item) => item.id}
@@ -182,6 +168,7 @@ const ProductGridScreen = ({ route, navigation }) => {
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={
+          // ... (Giữ nguyên ListFooterComponent)
           <View style={{ paddingHorizontal: SIZES.padding }}>
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See all</Text>
@@ -195,7 +182,7 @@ const ProductGridScreen = ({ route, navigation }) => {
                 </TouchableOpacity>
               </View>
               <FlatList
-                data={data.relevantProducts} // <-- Dùng dữ liệu động
+                data={data.relevantProducts}
                 renderItem={({ item }) => (
                   <ProductCard
                     name={item.name}
@@ -217,6 +204,7 @@ const ProductGridScreen = ({ route, navigation }) => {
   );
 };
 
+// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   backButton: {
     marginRight: 15,
