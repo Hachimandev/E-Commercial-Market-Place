@@ -8,6 +8,7 @@ import HomeScreen from "../screens/HomeScreen";
 import ProductListScreen from "../screens/ProductListScreen"; // <-- Tên mới (List View)
 import ProductGridScreen from "../screens/ProductGridScreen"; // <-- Tên mới (Grid View)
 import AccountScreen from "../screens/AccountScreen";
+import LoginScreen from "../screens/LoginScreen";
 import { Text, View, StyleSheet } from "react-native";
 import { COLORS } from "../constants/styles";
 import ProductDetailGeneralScreen from "../screens/ProductDetailGeneralScreen";
@@ -158,10 +159,22 @@ export default function BottomTabNavigator() {
       />
       <Tab.Screen
         name="AccountTab"
-        component={AccountScreen}
+        component={AccountStack}
         options={{ title: "Account" }}
         initialParams={{ name: "Account" }}
       />
     </Tab.Navigator>
   );
+
+  function AccountStack() {
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {global.isLoggedIn ? (
+          <Stack.Screen name="AccountScreen" component={AccountScreen} />
+        ) : (
+          <Stack.Screen name="LoginScreen" component={LoginScreen} />
+        )}
+      </Stack.Navigator>
+    );
+  }
 }
