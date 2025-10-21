@@ -7,6 +7,7 @@ import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import ProductListScreen from "../screens/ProductListScreen"; // <-- Tên mới (List View)
 import ProductGridScreen from "../screens/ProductGridScreen"; // <-- Tên mới (Grid View)
+import AccountScreen from "../screens/AccountScreen";
 import { Text, View, StyleSheet } from "react-native";
 import { COLORS } from "../constants/styles";
 import ProductDetailGeneralScreen from "../screens/ProductDetailGeneralScreen";
@@ -157,7 +158,7 @@ export default function BottomTabNavigator() {
       />
       <Tab.Screen
         name="AccountTab"
-        component={PlaceholderScreen}
+        component={AccountScreen}
         options={{ title: "Account" }}
         initialParams={{ name: "Account" }}
       />
