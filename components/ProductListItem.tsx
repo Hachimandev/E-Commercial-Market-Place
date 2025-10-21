@@ -17,6 +17,7 @@ interface ProductListItemProps {
   name: string;
   rating: number;
   price: number;
+  onPress?: () => void; // <-- THÊM PROP ONPRESS
 }
 
 const ProductListItem: React.FC<ProductListItemProps> = ({
@@ -24,9 +25,15 @@ const ProductListItem: React.FC<ProductListItemProps> = ({
   name,
   rating,
   price,
+  onPress, // <-- NHẬN PROP
 }) => {
   return (
-    <TouchableOpacity style={[styles.card, globalStyles.shadow]}>
+    <TouchableOpacity
+      style={[styles.card, globalStyles.shadow]}
+      onPress={onPress}
+    >
+      {" "}
+      {/* <-- SỬ DỤNG ONPRESS */}
       <View style={styles.imageContainer}>
         <Image
           source={imageSource}
@@ -57,6 +64,7 @@ const ProductListItem: React.FC<ProductListItemProps> = ({
   );
 };
 
+// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
@@ -79,7 +87,7 @@ const styles = StyleSheet.create({
     height: "80%",
   },
   details: {
-    flex: 1, // Chiếm không gian còn lại
+    flex: 1,
     justifyContent: "center",
   },
   productName: {

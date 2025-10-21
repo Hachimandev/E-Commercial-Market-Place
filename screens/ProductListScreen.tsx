@@ -19,8 +19,7 @@ import CategoryCard from "../components/CategoryCard";
 import ProductListItem from "../components/ProductListItem";
 
 // === DỮ LIỆU GIẢ ĐỊNH ===
-// Trong tương lai, bạn sẽ fetch dữ liệu này từ API dựa trên categoryName
-
+// Thêm 'detailScreen' vào sản phẩm
 const MOCK_DATA = {
   Electronics: {
     subCategories: [
@@ -46,28 +45,24 @@ const MOCK_DATA = {
         name: "Smartphone",
         rating: 4,
         price: 899,
-        image: require("../assets/img/samsung.png"),
-      },
+        image: require("../assets/img/iphone.png"),
+        detailScreen: "ProductDetailGeneral",
+      }, // <-- Thêm detailScreen
       {
         id: "b",
-        name: "Smartphone",
+        name: "Headphone",
         rating: 5,
-        price: 899,
-        image: require("../assets/img/iphone.png"),
-      },
+        price: 59,
+        image: require("../assets/img/headphone1.png"),
+        detailScreen: "ProductDetailGeneral",
+      }, // <-- Sửa 1 cái thành Headphone
       {
         id: "c",
         name: "Smartphone",
         rating: 4,
         price: 789,
         image: require("../assets/img/oppo.png"),
-      },
-      {
-        id: "d",
-        name: "Smartphone",
-        rating: 4,
-        price: 999,
-        image: require("../assets/img/realme.png"),
+        detailScreen: "ProductDetailGeneral",
       },
     ],
     banner: {
@@ -95,17 +90,19 @@ const MOCK_DATA = {
     products: [
       {
         id: "a",
-        name: "Casual Shirt",
+        name: "T-Shirt",
         rating: 4,
-        price: 45,
+        price: 2.99,
         image: require("../assets/img/hoodie-shirt.png"),
-      },
+        detailScreen: "ProductDetailVariant",
+      }, // <-- Thêm detailScreen
       {
         id: "b",
         name: "Denim Jacket",
         rating: 5,
         price: 89,
-        image: require("../assets/img/hoodie-shirt.png"),
+        image: require("../assets/img/denim-Jacket.png"),
+        detailScreen: "ProductDetailVariant",
       },
     ],
     banner: {
@@ -122,6 +119,7 @@ interface ListItemProduct {
   rating: number;
   price: number;
   image: ImageSourcePropType;
+  detailScreen: string; // <-- Thêm type
 }
 
 // @ts-ignore
@@ -129,11 +127,10 @@ const ProductListScreen = ({ route, navigation }) => {
   const { categoryName } = route.params; // "Electronics" hoặc "Fashion"
   const [activeTab, setActiveTab] = useState("Best Sales");
 
-  // Lấy dữ liệu đúng dựa trên categoryName (Giả lập API)
   // @ts-ignore
-  const data = MOCK_DATA[categoryName] || MOCK_DATA.Electronics; // Mặc định là Electronics nếu lỗi
+  const data = MOCK_DATA[categoryName] || MOCK_DATA.Electronics;
 
-  // Header
+  // Header (Giữ nguyên)
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -157,7 +154,7 @@ const ProductListScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // Filter Tabs
+  // Filter Tabs (Giữ nguyên)
   const renderFilterTabs = () => (
     <View style={styles.filterContainer}>
       {filterTabs.map((tab) => (
@@ -187,8 +184,7 @@ const ProductListScreen = ({ route, navigation }) => {
             <View style={{ paddingHorizontal: SIZES.padding }}>
               <SearchBar />
             </View>
-
-            {/* Sub-Categories */}
+            {/* Sub-Categories (Giữ nguyên) */}
             <View>
               <View
                 style={[styles.subHeader, { paddingHorizontal: SIZES.padding }]}
@@ -212,35 +208,38 @@ const ProductListScreen = ({ route, navigation }) => {
                 contentContainerStyle={{ paddingLeft: SIZES.padding }}
               />
             </View>
-
-            {/* Filter Tabs */}
             {renderFilterTabs()}
           </>
         }
-        data={data.products} // <-- Dùng dữ liệu động
+        data={data.products}
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: SIZES.padding }}>
+            {/* CẬP NHẬT RENDERITEM ĐỂ THÊM ONPRESS */}
             <ProductListItem
               name={item.name}
               rating={item.rating}
               price={item.price}
               imageSource={item.image}
+              onPress={() =>
+                navigation.navigate(item.detailScreen, {
+                  productId: item.id,
+                  name: item.name, // Gửi tên qua để header hiển thị
+                })
+              }
             />
           </View>
         )}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={
+          // ... (Giữ nguyên ListFooterComponent)
           <View style={{ paddingHorizontal: SIZES.padding }}>
-            {/* See All Button */}
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
-
-            {/* Bottom Banner */}
             <View style={styles.bottomBannerContainer}>
               <Image
-                source={data.banner} // <-- Dùng dữ liệu động
+                source={data.banner}
                 style={styles.bottomBannerImage}
                 resizeMode="cover"
               />
@@ -253,6 +252,7 @@ const ProductListScreen = ({ route, navigation }) => {
   );
 };
 
+// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   backButton: {
     marginRight: 15,
