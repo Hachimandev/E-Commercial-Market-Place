@@ -8,10 +8,13 @@ import HomeScreen from "../screens/HomeScreen";
 import ProductListScreen from "../screens/ProductListScreen"; // <-- Tên mới (List View)
 import ProductGridScreen from "../screens/ProductGridScreen"; // <-- Tên mới (Grid View)
 import AccountScreen from "../screens/AccountScreen";
+import LoginScreen from "../screens/LoginScreen";
+import RegisterScreen from "../screens/RegisterScreen";
 import { Text, View, StyleSheet } from "react-native";
 import { COLORS } from "../constants/styles";
 import ProductDetailGeneralScreen from "../screens/ProductDetailGeneralScreen";
 import ProductDetailVariantScreen from "../screens/ProductDetailVariantScreen";
+import { useAuth } from "../context/AuthContext";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -158,10 +161,27 @@ export default function BottomTabNavigator() {
       />
       <Tab.Screen
         name="AccountTab"
-        component={AccountScreen}
+        component={AccountStack}
         options={{ title: "Account" }}
         initialParams={{ name: "Account" }}
       />
     </Tab.Navigator>
   );
+
+  function AccountStack() {
+    const { isLoggedIn } = useAuth();
+
+    return (
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isLoggedIn ? (
+          <Stack.Screen name="AccountScreen" component={AccountScreen} />
+        ) : (
+          <>
+            <Stack.Screen name="LoginScreen" component={LoginScreen} />
+            <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+          </>
+        )}
+      </Stack.Navigator>
+    );
+  }
 }
