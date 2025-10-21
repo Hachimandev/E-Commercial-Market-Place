@@ -1,11 +1,16 @@
-// E-Commercial-Market-Place/screens/LoginScreen.tsx
 import React, { useState } from "react";
-import { View, StyleSheet, Alert } from "react-native";
-import { TextInput, Button, Text } from "react-native-paper";
+import { View, StyleSheet, Alert, Image } from "react-native";
+import { TextInput, Button, Text, useTheme } from "react-native-paper";
+import { useNavigation } from "@react-navigation/native";
+import { useAuth } from "../context/AuthContext";
 
-export default function LoginScreen({ navigation }: any) {
+const LoginScreen = () => {
+  const { colors } = useTheme();
+  const navigation = useNavigation<any>();
+
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const { login } = useAuth();
 
   const handleLogin = () => {
     if (!username.trim() || !password.trim()) {
@@ -13,30 +18,43 @@ export default function LoginScreen({ navigation }: any) {
       return;
     }
 
-    // Giả lập đăng nhập thành công
-    // Trong thực tế bạn có thể lưu token bằng AsyncStorage
-    global.isLoggedIn = true;
-    Alert.alert("Success", "Login successful!");
-    navigation.replace("AccountScreen"); // quay lại màn hình Account sau khi đăng nhập
+    const success = login(username, password);
+
+    if (success) {
+      Alert.alert("Success", "Login successful!");
+      navigation.navigate("AccountTab"); // quay lại tab Account
+    } else {
+      Alert.alert("Login Failed", "Invalid username or password.");
+    }
+  };
+
+  const handleGoToRegister = () => {
+    navigation.navigate("RegisterScreen");
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome Back!</Text>
+      <Image
+        source={{
+          uri: "https://cdn-icons-png.flaticon.com/512/5087/5087579.png",
+        }}
+        style={styles.logo}
+      />
+      <Text style={styles.title}>MarketPlaceX Login</Text>
 
       <TextInput
         label="Username"
-        mode="outlined"
         value={username}
         onChangeText={setUsername}
+        mode="outlined"
         style={styles.input}
       />
 
       <TextInput
         label="Password"
-        mode="outlined"
         value={password}
         onChangeText={setPassword}
+        mode="outlined"
         secureTextEntry
         style={styles.input}
       />
@@ -45,35 +63,55 @@ export default function LoginScreen({ navigation }: any) {
         mode="contained"
         onPress={handleLogin}
         style={styles.button}
-        buttonColor="#1976D2"
+        buttonColor={colors.primary}
       >
         Login
       </Button>
+
+      <Button
+        mode="text"
+        onPress={handleGoToRegister}
+        style={styles.registerButton}
+        textColor="#1976D2"
+      >
+        Don’t have an account? Register
+      </Button>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    padding: 24,
     backgroundColor: "#f9fafb",
+    justifyContent: "center",
+    padding: 20,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    alignSelf: "center",
+    marginBottom: 20,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "bold",
     textAlign: "center",
-    marginBottom: 30,
+    fontSize: 22,
+    fontWeight: "bold",
     color: "#333",
+    marginBottom: 30,
   },
   input: {
-    marginBottom: 16,
+    marginBottom: 15,
     backgroundColor: "white",
   },
   button: {
-    marginTop: 12,
-    borderRadius: 8,
+    marginTop: 10,
+    borderRadius: 10,
     paddingVertical: 8,
   },
+  registerButton: {
+    marginTop: 10,
+  },
 });
+
+export default LoginScreen;
