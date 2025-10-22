@@ -1,5 +1,3 @@
-// E-Commercial-Market-Place/screens/HomeScreen.tsx
-
 import React from "react";
 import {
   View,
@@ -11,7 +9,7 @@ import {
   Image,
   ImageSourcePropType,
 } from "react-native";
-// Bỏ useNavigation vì đã nhận từ props
+
 import { Ionicons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
 import CategoryIcon from "../components/CategoryIcon";
@@ -19,7 +17,6 @@ import ProductCard from "../components/ProductCard";
 import SearchBar from "../components/SearchBar";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 
-// Dữ liệu categories (Cập nhật targetScreen)
 const categories = [
   {
     id: "1",
@@ -51,7 +48,6 @@ const categories = [
   },
 ];
 
-// Định nghĩa Type cho sản phẩm
 interface RecommendedProduct {
   id: string;
   name: string;
@@ -60,7 +56,6 @@ interface RecommendedProduct {
   image: ImageSourcePropType;
 }
 
-// Dữ liệu sản phẩm (Giữ nguyên)
 const recommendedProducts: RecommendedProduct[] = [
   {
     id: "a",
@@ -87,9 +82,7 @@ const recommendedProducts: RecommendedProduct[] = [
 
 // @ts-ignore
 const HomeScreen: React.FC = ({ navigation }) => {
-  // Hàm xử lý điều hướng
   const handleCategoryPress = (item: any) => {
-    // Điều hướng đến màn hình đích và gửi 'categoryName'
     navigation.navigate(item.targetScreen, { categoryName: item.name });
   };
 
@@ -121,9 +114,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
         <FlatList
           data={categories}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => handleCategoryPress(item)} // <-- Dùng hàm điều hướng
-            >
+            <TouchableOpacity onPress={() => handleCategoryPress(item)}>
               <CategoryIcon
                 name={item.name}
                 imageSource={item.image}
@@ -137,7 +128,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
           contentContainerStyle={styles.categoryList}
         />
 
-        {/* ... (Các Banner giữ nguyên) ... */}
+        {/* Banner */}
         <View style={styles.mainBanner}>
           <View style={styles.bannerTextContainer}>
             <Text style={styles.bannerTitle}>Shoes</Text>
@@ -200,7 +191,6 @@ const HomeScreen: React.FC = ({ navigation }) => {
   );
 };
 
-// ... (Styles của HomeScreen giữ nguyên)
 const styles = StyleSheet.create({
   container: {
     flex: 1,

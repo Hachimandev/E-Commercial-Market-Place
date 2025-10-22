@@ -1,5 +1,3 @@
-// E-Commercial-Market-Place/screens/ProductDetailGeneralScreen.tsx
-
 import React from "react";
 import {
   View,
@@ -16,7 +14,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import ProductCard from "../components/ProductCard";
 
-// Dữ liệu giả định cho màn hình này
 // @ts-ignore
 const productData = {
   id: "prod-headphone-1",
@@ -33,7 +30,6 @@ const productData = {
         uri: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070",
       },
     },
-    // Thêm ảnh khác cho carousel
   ],
   features: [
     { id: "1", icon: "rocket-outline", text: "Express" },
@@ -84,10 +80,9 @@ const productData = {
 
 // @ts-ignore
 const ProductDetailGeneralScreen = ({ route, navigation }) => {
-  const { name } = route.params; // Lấy tên từ navigation
+  const { name } = route.params;
   const [notify, setNotify] = React.useState(false);
 
-  // Header
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -111,20 +106,18 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // Phần nội dung (để trong ScrollView)
   return (
     <SafeAreaView style={globalStyles.safeArea}>
       {renderHeader()}
       <ScrollView>
-        {/* Image Carousel */}
         <View style={styles.carouselContainer}>
           <Image
             source={productData.images[0].image}
             style={styles.mainImage}
             resizeMode="cover"
           />
-          {/* TODO: Thêm pagination dots */}
         </View>
+
         {/* Price & Rating */}
         <View style={styles.priceRow}>
           <Text style={styles.priceText}>${productData.price}</Text>
@@ -135,11 +128,13 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
             </Text>
           </View>
         </View>
-        {/* Description */}
+
+        {/* Description  */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.descriptionText}>{productData.description}</Text>
         </View>
+
         {/* Features */}
         <View style={styles.featuresContainer}>
           {productData.features.map((item) => (
@@ -153,6 +148,7 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
             </View>
           ))}
         </View>
+
         {/* Reviews */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -170,15 +166,12 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
               </Text>
             </View>
             <View style={styles.ratingBars}>
-              {/* Đây là phần thanh rating bar, bạn có thể component-hóa sau */}
               <View style={styles.ratingBarContainer}>
                 <View style={[styles.ratingBar, { width: "80%" }]} />
               </View>
               <View style={styles.ratingBarContainer}>
                 <View style={[styles.ratingBar, { width: "40%" }]} />
               </View>
-              {/* ...
-... */}
             </View>
           </View>
           {/* Individual Reviews */}
@@ -198,6 +191,7 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
             </View>
           ))}
         </View>
+
         {/* Relevant Products */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -222,6 +216,7 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
             contentContainerStyle={{ paddingVertical: 10 }}
           />
         </View>
+
         {/* Notify Me */}
         <View style={styles.notifyContainer}>
           <View style={styles.notifyIcon}>
@@ -239,7 +234,8 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
             value={notify}
           />
         </View>
-        <View style={{ height: 100 }} /> {/* Đệm cho footer */}
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Sticky Footer */}

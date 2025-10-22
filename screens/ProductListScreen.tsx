@@ -124,7 +124,7 @@ interface ListItemProduct {
 
 // @ts-ignore
 const ProductListScreen = ({ route, navigation }) => {
-  const { categoryName } = route.params; // "Electronics" hoặc "Fashion"
+  const { categoryName } = route.params;
   const [activeTab, setActiveTab] = useState("Best Sales");
 
   // @ts-ignore

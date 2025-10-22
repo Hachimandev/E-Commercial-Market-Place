@@ -67,7 +67,7 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
   const [quantity, setQuantity] = useState(1);
 
   // Header
-  const renderHeader = () => (
+  const   renderHeader = () => (
     <View
       style={[
         globalStyles.header,
