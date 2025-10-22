@@ -1,12 +1,10 @@
-// E-Commercial-Market-Place/navigation/BottomTabNavigator.tsx
-
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
-import ProductListScreen from "../screens/ProductListScreen"; // <-- Tên mới (List View)
-import ProductGridScreen from "../screens/ProductGridScreen"; // <-- Tên mới (Grid View)
+import ProductListScreen from "../screens/ProductListScreen";
+import ProductGridScreen from "../screens/ProductGridScreen";
 import AccountScreen from "../screens/AccountScreen";
 import LoginScreen from "../screens/LoginScreen";
 import RegisterScreen from "../screens/RegisterScreen";
@@ -15,11 +13,14 @@ import { COLORS } from "../constants/styles";
 import ProductDetailGeneralScreen from "../screens/ProductDetailGeneralScreen";
 import ProductDetailVariantScreen from "../screens/ProductDetailVariantScreen";
 import { useAuth } from "../context/AuthContext";
+import FilterScreen from "../screens/FilterScreen";
+import SearchScreen from "../screens/SearchScreen";
+import SearchResultScreen from "../screens/SearchResultScreen";
+import InboxScreen from "../screens/InboxScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Component cho các màn hình chưa làm (Giữ nguyên)
 const PlaceholderScreen = ({ route }: { route: any }) => (
   <View style={placeholderStyles.container}>
     <Text style={placeholderStyles.text}>{route.params.name} Screen</Text>
@@ -38,7 +39,7 @@ const placeholderStyles = StyleSheet.create({
   subtext: { fontSize: 16, color: "#888", marginTop: 8 },
 });
 
-// Stack cho Tab Home (Cập nhật)
+// Stack cho Tab Home
 function HomeStack() {
   return (
     <Stack.Navigator
@@ -47,7 +48,7 @@ function HomeStack() {
       }}
     >
       <Stack.Screen name="Home" component={HomeScreen} />
-      {/* CẬP NHẬT TÊN MÀN HÌNH ĐÍCH */}
+
       <Stack.Screen name="ProductList" component={ProductListScreen} />
       <Stack.Screen name="ProductGrid" component={ProductGridScreen} />
       <Stack.Screen
@@ -58,11 +59,51 @@ function HomeStack() {
         name="ProductDetailVariant"
         component={ProductDetailVariantScreen}
       />
+      <Stack.Screen
+        name="Filter"
+        component={FilterScreen}
+        options={{
+          presentation: "modal",
+        }}
+      />
     </Stack.Navigator>
   );
 }
 
-// Cấu hình Tab Bar chính (Giữ nguyên)
+function SearchStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="SearchBase" component={SearchScreen} />
+      <Stack.Screen name="SearchResult" component={SearchResultScreen} />
+      {/* Thêm các màn hình Detail và Filter để có thể điều hướng từ SearchResult */}
+      <Stack.Screen
+        name="ProductDetailGeneral"
+        component={ProductDetailGeneralScreen}
+      />
+      <Stack.Screen
+        name="ProductDetailVariant"
+        component={ProductDetailVariantScreen}
+      />
+      <Stack.Screen
+        name="Filter"
+        component={FilterScreen}
+        options={{ presentation: "modal" }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function InboxStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="InboxBase" component={InboxScreen} />
+      {/* // Sẵn sàng cho tương lai khi bạn thêm màn hình Chat
+      <Stack.Screen name="Chat" component={ChatScreen} /> 
+      */}
+    </Stack.Navigator>
+  );
+}
+
 export default function BottomTabNavigator() {
   return (
     <Tab.Navigator
@@ -85,7 +126,7 @@ export default function BottomTabNavigator() {
               iconName = color === COLORS.primary ? "home" : "home-outline";
               break;
             case "SearchTab":
-              iconName = "search-outline";
+              iconName = color === COLORS.primary ? "search" : "search-outline";
               break;
             case "FavoritesTab":
               return (
@@ -133,19 +174,18 @@ export default function BottomTabNavigator() {
         },
       })}
     >
-      {/* HomeTab (giữ nguyên) */}
+      {/* HomeTab*/}
       <Tab.Screen
         name="HomeTab"
         component={HomeStack}
         options={{ title: "Home" }}
       />
 
-      {/* Các tab khác (giữ nguyên) */}
+      {/* Các tab khác */}
       <Tab.Screen
         name="SearchTab"
-        component={PlaceholderScreen}
+        component={SearchStack}
         options={{ title: "Search" }}
-        initialParams={{ name: "Search" }}
       />
       <Tab.Screen
         name="FavoritesTab"
@@ -155,9 +195,8 @@ export default function BottomTabNavigator() {
       />
       <Tab.Screen
         name="InboxTab"
-        component={PlaceholderScreen}
+        component={InboxStack}
         options={{ title: "Inbox" }}
-        initialParams={{ name: "Inbox" }}
       />
       <Tab.Screen
         name="AccountTab"

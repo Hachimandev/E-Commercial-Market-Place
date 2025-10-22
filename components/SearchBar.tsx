@@ -1,11 +1,31 @@
-// E-Commercial-Market-Place/components/SearchBar.tsx
-
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SIZES } from "../constants/styles";
+import { useNavigation } from "@react-navigation/native";
 
-const SearchBar = () => {
+interface SearchBarProps {
+  initialQuery?: string;
+  onSubmitEditing?: (query: string) => void;
+}
+
+const SearchBar: React.FC<SearchBarProps> = ({
+  initialQuery = "",
+  onSubmitEditing,
+}) => {
+  const navigation = useNavigation();
+  const [query, setQuery] = useState(initialQuery);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
+
+  const handleSubmit = () => {
+    if (onSubmitEditing && query.trim().length > 0) {
+      onSubmitEditing(query);
+    }
+  };
+
   return (
     <View style={styles.searchBar}>
       <Ionicons
@@ -18,8 +38,16 @@ const SearchBar = () => {
         placeholder="Search for product"
         placeholderTextColor={COLORS.textLight}
         style={styles.searchInput}
+        value={query}
+        onChangeText={setQuery}
+        onSubmitEditing={handleSubmit}
+        returnKeyType="search"
       />
-      <TouchableOpacity style={styles.filterButton}>
+      <TouchableOpacity
+        style={styles.filterButton}
+        // @ts-ignore
+        onPress={() => navigation.navigate("Filter")}
+      >
         <Ionicons name="options-outline" size={24} color={COLORS.textLight} />
       </TouchableOpacity>
     </View>

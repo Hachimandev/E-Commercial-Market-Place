@@ -93,7 +93,7 @@ interface GridProduct {
   rating: number;
   price: number;
   image: ImageSourcePropType;
-  detailScreen: string; // <-- Thêm type
+  detailScreen: string;
 }
 
 // @ts-ignore
