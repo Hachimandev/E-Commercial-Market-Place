@@ -8,18 +8,17 @@ const AccountScreen = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const { logout } = useAuth();
+  const { user, logout, getProfile } = useAuth();
 
   useEffect(() => {
-    const mockAdminData = {
-      name: "Admin User",
-      phone: "0123456789",
-      address: "123 Market Street, Ho Chi Minh City",
-    };
-
-    setName(mockAdminData.name);
-    setPhone(mockAdminData.phone);
-    setAddress(mockAdminData.address);
+    (async () => {
+      const data = await getProfile();
+      if (data) {
+        setName(data.name);
+        setPhone(data.phone);
+        setAddress(data.address);
+      }
+    })();
   }, []);
 
   const handleSave = () => {
@@ -39,7 +38,7 @@ const AccountScreen = () => {
           style={styles.profileImage}
         />
         <Text style={styles.profileTitle}>My Account</Text>
-        <Text style={styles.roleText}>👑 Role: Admin</Text>
+        <Text style={styles.roleText}>👑 Role: {user?.role || "Unknown"}</Text>
       </View>
 
       {/* Form Card */}
