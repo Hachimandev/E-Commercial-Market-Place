@@ -1,38 +1,80 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-interface AuthContextType {
-  isLoggedIn: boolean;
-  login: (username: string, password: string) => boolean;
-  logout: () => void;
-}
+const AuthContext = createContext<any>(null);
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthProvider = ({ children }: any) => {
+  const [user, setUser] = useState<any>(null);
+  const [token, setToken] = useState<string | null>(null);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const API_URL = "http://192.168.1.92:8080/api/auth";
 
-  const login = (username: string, password: string) => {
-    // Dữ liệu test tạm
-    if (username === "admin" && password === "12345") {
-      setIsLoggedIn(true);
+  const login = async (username: string, password: string) => {
+    try {
+      const res = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      await AsyncStorage.setItem("token", data.token);
+      setToken(data.token);
+      setUser({ username, role: data.role });
+
       return true;
+    } catch (err) {
+      console.error("Login error:", err);
+      return false;
     }
-    return false;
   };
 
-  const logout = () => {
-    setIsLoggedIn(false);
+  const logout = async () => {
+    await AsyncStorage.removeItem("token");
+    setUser(null);
+    setToken(null);
   };
+
+  const getProfile = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem("token");
+      if (!storedToken) return null;
+
+      const res = await fetch(`http://192.168.1.92:8080/api/user/me`, {
+        headers: { Authorization: `Bearer ${storedToken}` },
+      });
+      if (!res.ok) return null;
+      const profile = await res.json();
+      setUser(profile);
+      return profile;
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
+
+  // ✅ Kiểm tra đăng nhập khi app khởi động
+  useEffect(() => {
+    (async () => {
+      const storedToken = await AsyncStorage.getItem("token");
+      if (storedToken) {
+        setToken(storedToken);
+        await getProfile();
+      }
+    })();
+  }, []);
+
+  const isLoggedIn = !!token;
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider
+      value={{ user, token, login, logout, getProfile, isLoggedIn }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used inside AuthProvider");
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

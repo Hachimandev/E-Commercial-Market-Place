@@ -12,17 +12,17 @@ const LoginScreen = () => {
   const [password, setPassword] = useState("");
   const { login } = useAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
 
-    const success = login(username, password);
+    const success = await login(username, password);
 
     if (success) {
       Alert.alert("Success", "Login successful!");
-      navigation.navigate("AccountTab"); // quay lại tab Account
+      navigation.navigate("AccountTab");
     } else {
       Alert.alert("Login Failed", "Invalid username or password.");
     }
