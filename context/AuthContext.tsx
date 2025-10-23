@@ -20,9 +20,25 @@ export const AuthProvider = ({ children }: any) => {
       if (!res.ok) return false;
 
       const data = await res.json();
+      const userData = {
+        username,
+        role: data.role,
+        name: data.fullName,
+        phone: data.phone,
+        address: data.address,
+      };
+      console.log(data);
       await AsyncStorage.setItem("token", data.token);
+      await AsyncStorage.setItem("user", JSON.stringify(userData));
       setToken(data.token);
-      setUser({ username, role: data.role });
+      setUser(userData);
+      setUser({
+        username,
+        role: data.role,
+        name: data.fullName,
+        phone: data.phone,
+        address: data.address,
+      });
 
       return true;
     } catch (err) {
@@ -43,10 +59,27 @@ export const AuthProvider = ({ children }: any) => {
       if (!storedToken) return null;
 
       const res = await fetch(`http://192.168.1.92:8080/api/user/me`, {
-        headers: { Authorization: `Bearer ${storedToken}` },
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${storedToken}`,
+        },
       });
-      if (!res.ok) return null;
-      const profile = await res.json();
+
+      if (!res.ok) {
+        console.log(await res.text());
+        throw new Error("Cannot fetch profile");
+      }
+
+      const data = await res.json();
+      const profile = {
+        username: data.username,
+        role: data.role,
+        name: data.fullName || data.name,
+        phone: data.phone,
+        address: data.address,
+      };
+
       setUser(profile);
       return profile;
     } catch (err) {
@@ -55,13 +88,17 @@ export const AuthProvider = ({ children }: any) => {
     }
   };
 
-  // ✅ Kiểm tra đăng nhập khi app khởi động
   useEffect(() => {
     (async () => {
       const storedToken = await AsyncStorage.getItem("token");
+      const storedUser = await AsyncStorage.getItem("user");
       if (storedToken) {
         setToken(storedToken);
-        await getProfile();
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        } else {
+          await getProfile();
+        }
       }
     })();
   }, []);

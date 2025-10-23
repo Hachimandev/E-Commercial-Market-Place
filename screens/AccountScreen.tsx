@@ -14,9 +14,9 @@ const AccountScreen = () => {
     (async () => {
       const data = await getProfile();
       if (data) {
-        setName(data.name);
-        setPhone(data.phone);
-        setAddress(data.address);
+        setName(data.name || "");
+        setPhone(data.phone || "");
+        setAddress(data.address || "");
       }
     })();
   }, []);
@@ -37,7 +37,7 @@ const AccountScreen = () => {
           source={{ uri: "https://i.pravatar.cc/150?img=12" }}
           style={styles.profileImage}
         />
-        <Text style={styles.profileTitle}>My Account</Text>
+        <Text style={styles.profileTitle}>{user?.name || "My Account"}</Text>
         <Text style={styles.roleText}>👑 Role: {user?.role || "Unknown"}</Text>
       </View>
 
@@ -46,7 +46,7 @@ const AccountScreen = () => {
         <Card.Content>
           <TextInput
             label="Full Name"
-            value={name}
+            value={user?.name || "rỗng"}
             onChangeText={setName}
             mode="outlined"
             style={styles.input}
@@ -54,7 +54,7 @@ const AccountScreen = () => {
 
           <TextInput
             label="Phone Number"
-            value={phone}
+            value={user?.phone || "rỗng"}
             onChangeText={setPhone}
             mode="outlined"
             keyboardType="numeric"
@@ -63,7 +63,7 @@ const AccountScreen = () => {
 
           <TextInput
             label="Address"
-            value={address}
+            value={user?.address || "rỗng"}
             onChangeText={setAddress}
             mode="outlined"
             multiline
