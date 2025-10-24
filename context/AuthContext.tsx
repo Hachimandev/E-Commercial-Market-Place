@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  const API_URL = "http://192.168.1.92:8080/api/auth";
+  const API_URL = "http://localhost:8080/api/auth";
 
   const login = async (
     username: string,
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const storedToken = await AsyncStorage.getItem("token");
       if (!storedToken) return null;
 
-      const res = await fetch(`http://192.168.1.92:8080/api/user/me`, {
+      const res = await fetch(`localhost:8080/api/user/me`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
