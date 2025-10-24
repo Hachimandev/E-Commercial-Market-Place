@@ -16,6 +16,7 @@ import CategoryIcon from "../components/CategoryIcon";
 import ProductCard from "../components/ProductCard";
 import SearchBar from "../components/SearchBar";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
+import { useCart } from "../context/CartContext";
 
 const categories = [
   {
@@ -82,6 +83,8 @@ const recommendedProducts: RecommendedProduct[] = [
 
 // @ts-ignore
 const HomeScreen: React.FC = ({ navigation }) => {
+  const { getCartItemCount } = useCart(); // <-- 2. LẤY HÀM ĐẾM SỐ LƯỢNG
+  const itemCount = getCartItemCount();
   const handleCategoryPress = (item: any) => {
     navigation.navigate(item.targetScreen, { categoryName: item.name });
   };
@@ -93,8 +96,18 @@ const HomeScreen: React.FC = ({ navigation }) => {
         <View style={globalStyles.header}>
           <Text style={globalStyles.headerTitle}>All Deals</Text>
           <View style={globalStyles.headerIconContainer}>
-            <TouchableOpacity style={globalStyles.iconButton}>
-              <Ionicons name="cart-outline" size={24} color="black" />
+            <TouchableOpacity
+              style={globalStyles.iconButton}
+              onPress={() => navigation.navigate("CheckoutStack")}
+            >
+              <View>
+                <Ionicons name="cart-outline" size={24} color="black" />
+                {itemCount > 0 && (
+                  <View style={styles.cartBadge}>
+                    <Text style={styles.cartBadgeText}>{itemCount}</Text>
+                  </View>
+                )}
+              </View>
             </TouchableOpacity>
             <TouchableOpacity style={styles.profileIcon}>
               <Image
@@ -291,6 +304,22 @@ const styles = StyleSheet.create({
   },
   productList: {
     paddingBottom: 20,
+  },
+  cartBadge: {
+    position: "absolute",
+    right: -8, // Tinh chỉnh vị trí
+    top: -5, // Tinh chỉnh vị trí
+    backgroundColor: "red",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
 });
 

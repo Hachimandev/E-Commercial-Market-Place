@@ -1,5 +1,4 @@
 // E-Commercial-Market-Place/screens/ProductGridScreen.tsx
-// (Trước đây là ProductListScreen.tsx)
 
 import React, { useState, useEffect } from "react";
 import {
@@ -17,10 +16,38 @@ import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import SearchBar from "../components/SearchBar";
 import ProductGridItem from "../components/ProductGridItem";
 import ProductCard from "../components/ProductCard";
+import { useCart } from "../context/CartContext";
 
-// === DỮ LIỆU GIẢ ĐỊNH ===
-// Thêm 'detailScreen' vào sản phẩm
-const MOCK_DATA = {
+// --- 1. ĐỊNH NGHĨA TYPES RÕ RÀNG ---
+interface GridProduct {
+  id: string;
+  name: string;
+  rating: number;
+  price: number;
+  image: ImageSourcePropType;
+  detailScreen: string;
+}
+
+interface RelevantProduct {
+  id: string;
+  name: string;
+  rating: number;
+  price: number;
+  image: ImageSourcePropType;
+}
+
+interface MockDataCategory {
+  banner: ImageSourcePropType;
+  products: GridProduct[];
+  relevantProducts: RelevantProduct[];
+}
+
+interface MockData {
+  [key: string]: MockDataCategory;
+}
+
+// --- 2. ÁP DỤNG TYPE CHO MOCK_DATA ---
+const MOCK_DATA: MockData = {
   "Fresh Fruits": {
     banner: {
       uri: "https://images.unsplash.com/photo-1543083477-4f785aeafaa9?q=80&w=2070",
@@ -33,7 +60,7 @@ const MOCK_DATA = {
         price: 10,
         image: require("../assets/img/pear.png"),
         detailScreen: "ProductDetailGeneral",
-      }, // <-- Thêm
+      },
       {
         id: "b",
         name: "Avocado",
@@ -41,7 +68,7 @@ const MOCK_DATA = {
         price: 4,
         image: require("../assets/img/fresh.png"),
         detailScreen: "ProductDetailGeneral",
-      }, // <-- Thêm
+      },
     ],
     relevantProducts: [
       {
@@ -65,7 +92,7 @@ const MOCK_DATA = {
         price: 25,
         image: require("../assets/img/lipstick.png"),
         detailScreen: "ProductDetailVariant",
-      }, // <-- Thêm
+      },
       {
         id: "b",
         name: "Foundation",
@@ -73,7 +100,7 @@ const MOCK_DATA = {
         price: 40,
         image: require("../assets/img/foundation.png"),
         detailScreen: "ProductDetailVariant",
-      }, // <-- Thêm
+      },
     ],
     relevantProducts: [
       {
@@ -87,23 +114,16 @@ const MOCK_DATA = {
   },
 };
 
-interface GridProduct {
-  id: string;
-  name: string;
-  rating: number;
-  price: number;
-  image: ImageSourcePropType;
-  detailScreen: string;
-}
-
 // @ts-ignore
 const ProductGridScreen = ({ route, navigation }) => {
   const { categoryName } = route.params;
+  const { getCartItemCount } = useCart(); // <-- 2. LẤY HÀM
+  const itemCount = getCartItemCount();
 
   // @ts-ignore
   const data = MOCK_DATA[categoryName] || MOCK_DATA["Fresh Fruits"];
 
-  // Header (Giữ nguyên)
+  // ... (renderHeader giữ nguyên)
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -114,8 +134,18 @@ const ProductGridScreen = ({ route, navigation }) => {
       </TouchableOpacity>
       <Text style={globalStyles.headerTitle}>{categoryName}</Text>
       <View style={globalStyles.headerIconContainer}>
-        <TouchableOpacity style={globalStyles.iconButton}>
-          <Ionicons name="cart-outline" size={24} color={COLORS.text} />
+        <TouchableOpacity
+          style={globalStyles.iconButton}
+          onPress={() => navigation.navigate("CheckoutStack")}
+        >
+          <View>
+            <Ionicons name="cart-outline" size={24} color={COLORS.text} />
+            {itemCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{itemCount}</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.profileIcon}>
           <Image
@@ -137,7 +167,6 @@ const ProductGridScreen = ({ route, navigation }) => {
             <View style={{ paddingHorizontal: SIZES.padding }}>
               <SearchBar />
             </View>
-            {/* Banner (Giữ nguyên) */}
             <View style={styles.bannerContainer}>
               <Image
                 source={data.banner}
@@ -147,33 +176,28 @@ const ProductGridScreen = ({ route, navigation }) => {
             </View>
           </>
         }
-        data={data.products}
+        data={data.products} // <-- data.products giờ đã có type
+        // --- 3. SỬA LỖI RENDERITEM ---
         renderItem={({ item }) => (
-          // CẬP NHẬT RENDERITEM ĐỂ THÊM ONPRESS
           <ProductGridItem
-            name={item.name}
-            rating={item.rating}
-            price={item.price}
-            imageSource={item.image}
+            item={item} // <-- Truyền cả object 'item'
             onPress={() =>
               navigation.navigate(item.detailScreen, {
                 productId: item.id,
-                name: item.name, // Gửi tên qua
+                name: item.name,
               })
             }
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id} // <-- Lỗi 'never' đã được sửa
         numColumns={2}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={
-          // ... (Giữ nguyên ListFooterComponent)
           <View style={{ paddingHorizontal: SIZES.padding }}>
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
-
             <View style={styles.relevantContainer}>
               <View style={styles.relevantHeader}>
                 <Text style={globalStyles.sectionTitle}>Relevant products</Text>
@@ -254,6 +278,22 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+  },
+  cartBadge: {
+    position: "absolute",
+    right: -8,
+    top: -5,
+    backgroundColor: "red",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
 });
 

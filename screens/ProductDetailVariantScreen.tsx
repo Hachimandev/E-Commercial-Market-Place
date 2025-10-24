@@ -9,13 +9,38 @@ import {
   ScrollView,
   Image,
   FlatList,
-} from "react-native";
+  ImageSourcePropType,
+} from "react-native"; // <-- Thêm ImageSourcePropType
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
+import { useCart } from "../context/CartContext";
 
-// Dữ liệu giả định
-const productData = {
+// --- 1. ĐỊNH NGHĨA TYPES RÕ RÀNG ---
+interface ProductImage {
+  id: string;
+  image: ImageSourcePropType;
+}
+
+interface ProductColor {
+  id: string;
+  code: string;
+}
+
+interface ProductData {
+  id: string;
+  name: string;
+  shortDescription: string;
+  price: number;
+  rating: number;
+  offer: string;
+  images: ProductImage[];
+  colors: ProductColor[];
+  sizes: string[];
+}
+
+// --- 2. ÁP DỤNG TYPE CHO productData ---
+const productData: ProductData = {
   id: "tshirt-001",
   name: "Hoodie shirt",
   shortDescription: "Occaecat est deserunt tempor offici",
@@ -26,25 +51,25 @@ const productData = {
     {
       id: "img1",
       image: {
-        uri: require("../assets/img/hoodie-shirt.png"),
+        uri: "https://images.unsplash.com/photo-1578918663372-3ab76643d83d?q=80&w=1964",
       },
     },
     {
       id: "img2",
       image: {
-        uri: require("../assets/img/denim-Jacket.png"),
+        uri: "https://images.unsplash.com/photo-1548883358-692c63c381c5?q=80&w=1964",
       },
     },
     {
       id: "img3",
       image: {
-        uri: require("../assets/img/hoodie-shirt.png"),
+        uri: "https://images.unsplash.com/photo-1578918637741-599d1b02b66a?q=80&w=1964",
       },
     },
     {
       id: "img4",
       image: {
-        uri: require("../assets/img/hoodie-shirt.png"),
+        uri: "https://images.unsplash.com/photo-1582845512747-e4233823c093?q=80&w=1964",
       },
     },
   ],
@@ -59,15 +84,16 @@ const productData = {
 // @ts-ignore
 const ProductDetailVariantScreen = ({ route, navigation }) => {
   const { name } = route.params;
+  const { addItem } = useCart();
 
   // States
   const [mainImage, setMainImage] = useState(productData.images[0].image);
-  const [selectedColor, setSelectedColor] = useState(productData.colors[0].id);
+  const [selectedColor, setSelectedColor] = useState(productData.colors[0].id); // <-- LỖI ĐÃ ĐƯỢC SỬA
   const [selectedSize, setSelectedSize] = useState(productData.sizes[2]); // Default 'M'
   const [quantity, setQuantity] = useState(1);
 
-  // Header
-  const   renderHeader = () => (
+  // Header (Giữ nguyên)
+  const renderHeader = () => (
     <View
       style={[
         globalStyles.header,
@@ -104,11 +130,13 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
           styles.headerButton,
           { backgroundColor: "rgba(255,255,255,0.7)" },
         ]}
-      ></TouchableOpacity>
+      >
+        {/* Có thể thêm icon 'heart-outline' ở đây */}
+      </TouchableOpacity>
     </View>
   );
 
-  // Color Selector
+  // Color Selector (Giữ nguyên)
   const renderColorOptions = () => (
     <View style={styles.optionContainer}>
       <Text style={styles.optionTitle}>Color</Text>
@@ -128,7 +156,7 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // Size Selector
+  // Size Selector (Giữ nguyên)
   const renderSizeOptions = () => (
     <View style={styles.optionContainer}>
       <Text style={styles.optionTitle}>Size</Text>
@@ -156,7 +184,7 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // Quantity Selector
+  // Quantity Selector (Giữ nguyên)
   const renderQuantitySelector = () => (
     <View style={styles.quantityContainer}>
       <Text style={styles.optionTitle}>Quantity</Text>
@@ -181,10 +209,23 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
     </View>
   );
 
+  // Hàm xử lý "Add to cart" (Giữ nguyên)
+  const handleAddToCart = () => {
+    const itemToAdd = {
+      id: `${productData.id}-${selectedColor}-${selectedSize}`,
+      name: productData.name,
+      price: productData.price,
+      image: mainImage,
+    };
+    addItem(itemToAdd, quantity);
+    navigation.navigate("CheckoutStack");
+  };
+
   return (
     <SafeAreaView style={[globalStyles.safeArea, { position: "relative" }]}>
       <ScrollView>
         {renderHeader()}
+
         {/* Main Image */}
         <View style={styles.imageContainer}>
           <Image
@@ -193,6 +234,7 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
             resizeMode="cover"
           />
         </View>
+
         {/* Thumbnail Images */}
         <FlatList
           data={productData.images}
@@ -206,6 +248,7 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.thumbnailList}
         />
+
         {/* Info */}
         <View style={styles.infoContainer}>
           <View style={styles.titleRow}>
@@ -249,12 +292,16 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
             />
           </TouchableOpacity>
         </View>
-        <View style={{ height: 100 }} /> {/* Đệm cho footer */}
+
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* Sticky Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.addToCartButton}>
+        <TouchableOpacity
+          style={styles.addToCartButton}
+          onPress={handleAddToCart}
+        >
           <Ionicons name="cart" size={22} color={COLORS.background} />
           <Text style={styles.addToCartButtonText}>Add to cart</Text>
         </TouchableOpacity>
@@ -263,6 +310,7 @@ const ProductDetailVariantScreen = ({ route, navigation }) => {
   );
 };
 
+// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   headerButton: {
     width: 40,
