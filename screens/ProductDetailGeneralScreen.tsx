@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import ProductCard from "../components/ProductCard";
+import { useCart } from "../context/CartContext";
 
 // @ts-ignore
 const productData = {
@@ -82,6 +83,26 @@ const productData = {
 const ProductDetailGeneralScreen = ({ route, navigation }) => {
   const { name } = route.params;
   const [notify, setNotify] = React.useState(false);
+  const { addItem, getCartItemCount } = useCart(); // <-- 2. LẤY HÀM TỪ CONTEXT
+  const itemCount = getCartItemCount();
+  // 3. TẠO ITEM ĐỂ THÊM VÀO GIỎ HÀNG
+  const itemToAdd = {
+    id: productData.id,
+    name: productData.name,
+    price: productData.price,
+    image: productData.images[0].image,
+  };
+
+  // 4. HÀM XỬ LÝ
+  const handleAddToCart = () => {
+    addItem(itemToAdd, 1);
+    // (Bạn có thể thêm 1 thông báo "Đã thêm vào giỏ" ở đây)
+  };
+
+  const handleBuyNow = () => {
+    addItem(itemToAdd, 1); // Thêm 1 sản phẩm
+    navigation.navigate("CheckoutStack"); // Lập tức đi tới giỏ hàng
+  };
 
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
@@ -93,8 +114,18 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
       </TouchableOpacity>
       <Text style={globalStyles.headerTitle}>{name}</Text>
       <View style={globalStyles.headerIconContainer}>
-        <TouchableOpacity style={globalStyles.iconButton}>
-          <Ionicons name="cart-outline" size={24} color={COLORS.text} />
+        <TouchableOpacity
+          style={globalStyles.iconButton}
+          onPress={() => navigation.navigate("CheckoutStack")}
+        >
+          <View>
+            <Ionicons name="cart-outline" size={24} color={COLORS.text} />
+            {itemCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{itemCount}</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.profileIcon}>
           <Image
@@ -196,10 +227,12 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Relevant products</Text>
+
             <TouchableOpacity>
               <Text style={globalStyles.viewAllText}>See all</Text>
             </TouchableOpacity>
           </View>
+
           <FlatList
             data={productData.relevantProducts}
             renderItem={({ item }) => (
@@ -240,10 +273,10 @@ const ProductDetailGeneralScreen = ({ route, navigation }) => {
 
       {/* Sticky Footer */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.cartButton}>
+        <TouchableOpacity style={styles.cartButton} onPress={handleAddToCart}>
           <Ionicons name="cart-outline" size={28} color={COLORS.primary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.buyButton}>
+        <TouchableOpacity style={styles.buyButton} onPress={handleBuyNow}>
           <Text style={styles.buyButtonText}>Buy Now</Text>
         </TouchableOpacity>
       </View>
@@ -380,6 +413,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   buyButtonText: { color: COLORS.background, fontSize: 16, fontWeight: "bold" },
+  cartBadge: {
+    position: "absolute",
+    right: -8,
+    top: -5,
+    backgroundColor: "red",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
+  },
 });
 
 export default ProductDetailGeneralScreen;

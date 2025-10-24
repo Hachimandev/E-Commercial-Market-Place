@@ -1,5 +1,4 @@
 // E-Commercial-Market-Place/screens/ProductListScreen.tsx
-// (Trước đây là ElectronicsListScreen.tsx)
 
 import React, { useState, useEffect } from "react";
 import {
@@ -17,10 +16,36 @@ import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import SearchBar from "../components/SearchBar";
 import CategoryCard from "../components/CategoryCard";
 import ProductListItem from "../components/ProductListItem";
+import { useCart } from "../context/CartContext";
 
-// === DỮ LIỆU GIẢ ĐỊNH ===
-// Thêm 'detailScreen' vào sản phẩm
-const MOCK_DATA = {
+// --- 1. ĐỊNH NGHĨA TYPES RÕ RÀNG ---
+interface SubCategory {
+  id: string;
+  image: ImageSourcePropType;
+  color: string;
+}
+
+interface ListItemProduct {
+  id: string;
+  name: string;
+  rating: number;
+  price: number;
+  image: ImageSourcePropType;
+  detailScreen: string;
+}
+
+interface MockDataCategory {
+  subCategories: SubCategory[];
+  products: ListItemProduct[];
+  banner: ImageSourcePropType;
+}
+
+interface MockData {
+  [key: string]: MockDataCategory; // Type cho đối tượng MOCK_DATA
+}
+
+// --- 2. ÁP DỤNG TYPE CHO MOCK_DATA ---
+const MOCK_DATA: MockData = {
   Electronics: {
     subCategories: [
       {
@@ -45,9 +70,9 @@ const MOCK_DATA = {
         name: "Smartphone",
         rating: 4,
         price: 899,
-        image: require("../assets/img/iphone.png"),
+        image: require("../assets/img/electronics.png"),
         detailScreen: "ProductDetailGeneral",
-      }, // <-- Thêm detailScreen
+      },
       {
         id: "b",
         name: "Headphone",
@@ -55,13 +80,13 @@ const MOCK_DATA = {
         price: 59,
         image: require("../assets/img/headphone1.png"),
         detailScreen: "ProductDetailGeneral",
-      }, // <-- Sửa 1 cái thành Headphone
+      },
       {
         id: "c",
         name: "Smartphone",
         rating: 4,
         price: 789,
-        image: require("../assets/img/oppo.png"),
+        image: require("../assets/img/electronics.png"),
         detailScreen: "ProductDetailGeneral",
       },
     ],
@@ -73,7 +98,7 @@ const MOCK_DATA = {
     subCategories: [
       {
         id: "1",
-        image: require("../assets/img/headphone.png"),
+        image: require("../assets/img/lipstick.png"),
         color: "#E0FFFF",
       },
       {
@@ -95,7 +120,7 @@ const MOCK_DATA = {
         price: 2.99,
         image: require("../assets/img/hoodie-shirt.png"),
         detailScreen: "ProductDetailVariant",
-      }, // <-- Thêm detailScreen
+      },
       {
         id: "b",
         name: "Denim Jacket",
@@ -113,24 +138,18 @@ const MOCK_DATA = {
 
 const filterTabs = ["Best Sales", "Best Matched", "Popular"];
 
-interface ListItemProduct {
-  id: string;
-  name: string;
-  rating: number;
-  price: number;
-  image: ImageSourcePropType;
-  detailScreen: string; // <-- Thêm type
-}
-
 // @ts-ignore
 const ProductListScreen = ({ route, navigation }) => {
   const { categoryName } = route.params;
   const [activeTab, setActiveTab] = useState("Best Sales");
 
+  const { getCartItemCount } = useCart(); // <-- 2. LẤY HÀM
+  const itemCount = getCartItemCount();
+
   // @ts-ignore
   const data = MOCK_DATA[categoryName] || MOCK_DATA.Electronics;
 
-  // Header (Giữ nguyên)
+  // ... (renderHeader và renderFilterTabs giữ nguyên)
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -141,8 +160,18 @@ const ProductListScreen = ({ route, navigation }) => {
       </TouchableOpacity>
       <Text style={globalStyles.headerTitle}>{categoryName}</Text>
       <View style={globalStyles.headerIconContainer}>
-        <TouchableOpacity style={globalStyles.iconButton}>
-          <Ionicons name="cart-outline" size={24} color={COLORS.text} />
+        <TouchableOpacity
+          style={globalStyles.iconButton}
+          onPress={() => navigation.navigate("CheckoutStack")}
+        >
+          <View>
+            <Ionicons name="cart-outline" size={24} color={COLORS.text} />
+            {itemCount > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{itemCount}</Text>
+              </View>
+            )}
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={styles.profileIcon}>
           <Image
@@ -154,7 +183,6 @@ const ProductListScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // Filter Tabs (Giữ nguyên)
   const renderFilterTabs = () => (
     <View style={styles.filterContainer}>
       {filterTabs.map((tab) => (
@@ -184,7 +212,6 @@ const ProductListScreen = ({ route, navigation }) => {
             <View style={{ paddingHorizontal: SIZES.padding }}>
               <SearchBar />
             </View>
-            {/* Sub-Categories (Giữ nguyên) */}
             <View>
               <View
                 style={[styles.subHeader, { paddingHorizontal: SIZES.padding }]}
@@ -211,28 +238,24 @@ const ProductListScreen = ({ route, navigation }) => {
             {renderFilterTabs()}
           </>
         }
-        data={data.products}
+        data={data.products} // <-- data.products giờ đã có type
+        // --- 3. SỬA LỖI RENDERITEM ---
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: SIZES.padding }}>
-            {/* CẬP NHẬT RENDERITEM ĐỂ THÊM ONPRESS */}
             <ProductListItem
-              name={item.name}
-              rating={item.rating}
-              price={item.price}
-              imageSource={item.image}
+              item={item} // <-- Truyền cả object 'item'
               onPress={() =>
                 navigation.navigate(item.detailScreen, {
                   productId: item.id,
-                  name: item.name, // Gửi tên qua để header hiển thị
+                  name: item.name,
                 })
               }
             />
           </View>
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id} // <-- Lỗi 'never' đã được sửa
         showsVerticalScrollIndicator={false}
         ListFooterComponent={
-          // ... (Giữ nguyên ListFooterComponent)
           <View style={{ paddingHorizontal: SIZES.padding }}>
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See all</Text>
@@ -323,6 +346,22 @@ const styles = StyleSheet.create({
   bottomBannerImage: {
     width: "100%",
     height: "100%",
+  },
+  cartBadge: {
+    position: "absolute",
+    right: -8,
+    top: -5,
+    backgroundColor: "red",
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cartBadgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
 });
 
