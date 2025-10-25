@@ -11,6 +11,7 @@ import OrderManagementScreen from "../screens/admin/OrderManagementScreen";
 import AnalyticsScreen from "../screens/admin/AnalyticsScreen";
 import SettingsScreen from "../screens/admin/SettingsScreen";
 import AddEditProductScreen from "../screens/admin/AddEditProductScreen";
+import AccountScreen from "../screens/AccountScreen";
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -99,6 +100,17 @@ const AdminDrawerNavigator = () => {
           title: "Settings",
           drawerIcon: ({ color, size }) => (
             <Ionicons name="settings-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Drawer.Screen
+        name="Account"
+        component={AccountScreen}
+        options={{
+          title: "Account",
+          drawerIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />
