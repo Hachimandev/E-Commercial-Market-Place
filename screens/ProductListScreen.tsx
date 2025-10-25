@@ -1,4 +1,5 @@
 // E-Commercial-Market-Place/screens/ProductListScreen.tsx
+
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -9,6 +10,7 @@ import {
   Image,
   ActivityIndicator,
   Alert,
+  ImageSourcePropType, // <-- Import thêm
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,13 +21,26 @@ import { useCart } from "../context/CartContext";
 
 const filterTabs = ["Best Sales", "Best Matched", "Popular"];
 
+// --- 1. ĐỊNH NGHĨA TYPE CHO SẢN PHẨM FRONTEND ---
+interface FrontendProduct {
+  id: string;
+  name: string;
+  rating: number;
+  price: number;
+  image: ImageSourcePropType;
+  detailScreen: "ProductDetailGeneral" | "ProductDetailVariant"; // Kiểu cụ thể
+}
+
+// --- 2. CẬP NHẬT LOCAL_IMAGE_MAP (Nếu cần) ---
+// (Giữ nguyên map của bạn, đảm bảo key khớp với imageURL từ BE)
 const LOCAL_IMAGE_MAP: Record<string, any> = {
   "iphone15.jpg": require("../assets/img/iphone.png"),
   "macbook.jpg": require("../assets/img/macbook.png"),
   "lipstick.jpg": require("../assets/img/lipstick.png"),
-  "mango.jpg": require("../assets/img/cherry.png"),
+  "mango.jpg": require("../assets/img/cherry.png"), // Thay bằng ảnh cherry cho khớp ví dụ
   "headphone1.png": require("../assets/img/headphone1.png"),
   "headphone2.png": require("../assets/img/headphone2.png"),
+  // Thêm các ảnh khác nếu cần
 };
 
 // @ts-ignore
@@ -35,7 +50,7 @@ const ProductListScreen = ({ route, navigation }) => {
   const itemCount = getCartItemCount();
 
   const [activeTab, setActiveTab] = useState("Best Sales");
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<FrontendProduct[]>([]); // <-- Sử dụng Type mới
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -44,38 +59,63 @@ const ProductListScreen = ({ route, navigation }) => {
   }, [categoryName]);
 
   const fetchProductsByCategory = async () => {
+    setLoading(true); // Reset loading state
+    setError(""); // Reset error state
     try {
+      // --- 3. ĐẢM BẢO ĐỊA CHỈ IP ĐÚNG ---
+      // Dùng địa chỉ IP của máy bạn, ví dụ: 192.168.1.100
+      // Hoặc nếu chạy trên simulator/emulator cùng máy thì dùng localhost
+      const API_BASE_URL = "http://localhost:8080"; // <<< THAY IP NẾU CẦN
+
       const res = await fetch(
-        `http://localhost:8080/api/products/category/${categoryName}`
+        `${API_BASE_URL}/api/products/category/${categoryName.toLowerCase()}` // <-- Chuyển category về chữ thường nếu cần
       );
-      if (!res.ok) throw new Error("Fetch failed");
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Fetch failed: ${res.status} - ${errorText}`);
+      }
       const data = await res.json();
 
-      console.log(data);
-      const mapped = data.map((item: any) => {
+      console.log(`Data for ${categoryName}:`, data);
+
+      // --- 4. CẬP NHẬT LOGIC MAPPING ---
+      const mapped: FrontendProduct[] = data.map((item: any) => {
         const localImg = LOCAL_IMAGE_MAP[item.imageURL];
+
+        // Xác định trang detail dựa vào category
+        let detailScreenTarget: "ProductDetailGeneral" | "ProductDetailVariant";
+        if (
+          categoryName.toLowerCase() === "fashion" ||
+          categoryName.toLowerCase() === "beauty"
+        ) {
+          detailScreenTarget = "ProductDetailVariant";
+        } else {
+          detailScreenTarget = "ProductDetailGeneral";
+        }
+
         return {
-          id: item.productId?.toString() || "",
-          name: item.name || "Sản phẩm không tên",
+          id: item.productId?.toString() ?? `temp_${Math.random()}`, // Cần ID duy nhất
+          name: item.name || "Unnamed Product",
           rating: item.rating || 0,
           price: item.price || 0,
           image: localImg ?? {
-            uri: `http://localhost:8080/images/${item.imageURL}`,
+            // Nếu không có ảnh local, dùng URL từ server
+            uri: `${API_BASE_URL}/images/${item.imageURL}`,
           },
-          detailScreen: "ProductDetailGeneral",
+          detailScreen: detailScreenTarget, // <-- Gán trang detail đúng
         };
       });
 
       setProducts(mapped);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading products:", error);
-      setError("Không thể tải sản phẩm!");
+      setError(`Could not load products. ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- HEADER ---
+  // --- HEADER (Giữ nguyên) ---
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -109,7 +149,7 @@ const ProductListScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // --- FILTER TABS ---
+  // --- FILTER TABS (Giữ nguyên) ---
   const renderFilterTabs = () => (
     <View style={styles.filterContainer}>
       {filterTabs.map((tab) => (
@@ -129,35 +169,18 @@ const ProductListScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // --- HIỂN THỊ LOADING / LỖI ---
+  // --- HIỂN THỊ LOADING / LỖI (Giữ nguyên) ---
   if (loading) {
-    return (
-      <SafeAreaView style={globalStyles.safeArea}>
-        <ActivityIndicator
-          size="large"
-          color={COLORS.primary}
-          style={{ marginTop: 50 }}
-        />
-      </SafeAreaView>
-    );
+    /* ... */
   }
-
   if (error) {
-    return (
-      <SafeAreaView style={globalStyles.safeArea}>
-        {renderHeader()}
-        <View style={{ alignItems: "center", marginTop: 50 }}>
-          <Text style={{ color: COLORS.textLight }}>{error}</Text>
-        </View>
-      </SafeAreaView>
-    );
+    /* ... */
   }
 
   // --- HIỂN THỊ SẢN PHẨM ---
   return (
     <SafeAreaView style={globalStyles.safeArea}>
       {renderHeader()}
-
       <FlatList
         ListHeaderComponent={
           <>
@@ -165,20 +188,22 @@ const ProductListScreen = ({ route, navigation }) => {
               <SearchBar />
             </View>
             {renderFilterTabs()}
-            <View style={{ paddingHorizontal: SIZES.padding, marginTop: 10 }}>
-              <Text
-                style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}
-              >
-                {categoryName}
-              </Text>
-            </View>
           </>
         }
         data={products}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.id}
+        // --- 5. CẬP NHẬT RENDER ITEM VỚI ONPRESS ---
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: SIZES.padding }}>
-            <ProductListItem item={item} />
+            <ProductListItem
+              item={item}
+              onPress={() =>
+                navigation.navigate(item.detailScreen, {
+                  productId: item.id, // <-- Gửi productId
+                  name: item.name, // <-- Gửi name
+                })
+              }
+            />
           </View>
         )}
         showsVerticalScrollIndicator={false}
@@ -188,7 +213,7 @@ const ProductListScreen = ({ route, navigation }) => {
   );
 };
 
-// --- STYLES ---
+// --- STYLES (Giữ nguyên) ---
 const styles = StyleSheet.create({
   backButton: { marginRight: 15 },
   profileIcon: {

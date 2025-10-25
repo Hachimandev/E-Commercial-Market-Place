@@ -9,23 +9,24 @@ import {
   FlatList,
   Image,
   ImageSourcePropType,
-} from "react-native";
+  ActivityIndicator,
+} from "react-native"; // <-- Thêm ActivityIndicator
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import SearchBar from "../components/SearchBar";
 import ProductGridItem from "../components/ProductGridItem";
 import ProductCard from "../components/ProductCard";
-import { useCart } from "../context/CartContext";
+import { useCart } from "../context/CartContext"; // <-- Import useCart
 
-// --- 1. ĐỊNH NGHĨA TYPES RÕ RÀNG ---
-interface GridProduct {
+// --- 1. ĐỊNH NGHĨA TYPES ---
+interface FrontendProduct {
   id: string;
   name: string;
   rating: number;
   price: number;
   image: ImageSourcePropType;
-  detailScreen: string;
+  detailScreen: "ProductDetailGeneral" | "ProductDetailVariant";
 }
 
 interface RelevantProduct {
@@ -36,94 +37,91 @@ interface RelevantProduct {
   image: ImageSourcePropType;
 }
 
-interface MockDataCategory {
-  banner: ImageSourcePropType;
-  products: GridProduct[];
-  relevantProducts: RelevantProduct[];
-}
-
-interface MockData {
-  [key: string]: MockDataCategory;
-}
-
-// --- 2. ÁP DỤNG TYPE CHO MOCK_DATA ---
-const MOCK_DATA: MockData = {
-  "Fresh Fruits": {
-    banner: {
-      uri: "https://images.unsplash.com/photo-1543083477-4f785aeafaa9?q=80&w=2070",
-    },
-    products: [
-      {
-        id: "a",
-        name: "Pear",
-        rating: 4,
-        price: 10,
-        image: require("../assets/img/pear.png"),
-        detailScreen: "ProductDetailGeneral",
-      },
-      {
-        id: "b",
-        name: "Avocado",
-        rating: 5,
-        price: 4,
-        image: require("../assets/img/fresh.png"),
-        detailScreen: "ProductDetailGeneral",
-      },
-    ],
-    relevantProducts: [
-      {
-        id: "e",
-        name: "Peach",
-        rating: 4.0,
-        price: 15,
-        image: require("../assets/img/peach.png"),
-      },
-    ],
-  },
-  Beauty: {
-    banner: {
-      uri: "https://images.unsplash.com/photo-1556228720-19b0672b2a0d?q=80&w=2070",
-    },
-    products: [
-      {
-        id: "a",
-        name: "Lipstick",
-        rating: 4,
-        price: 25,
-        image: require("../assets/img/lipstick.png"),
-        detailScreen: "ProductDetailVariant",
-      },
-      {
-        id: "b",
-        name: "Foundation",
-        rating: 5,
-        price: 40,
-        image: require("../assets/img/foundation.png"),
-        detailScreen: "ProductDetailVariant",
-      },
-    ],
-    relevantProducts: [
-      {
-        id: "e",
-        name: "Perfume",
-        rating: 4.8,
-        price: 120,
-        image: require("../assets/img/perfume.png"),
-      },
-    ],
-  },
+// --- 2. LOCAL IMAGE MAP (Giữ nguyên hoặc cập nhật) ---
+const LOCAL_IMAGE_MAP: Record<string, any> = {
+  "iphone15.jpg": require("../assets/img/iphone.png"),
+  "macbook.jpg": require("../assets/img/macbook.png"),
+  "lipstick.jpg": require("../assets/img/lipstick.png"),
+  "mango.jpg": require("../assets/img/cherry.png"),
+  "headphone1.png": require("../assets/img/headphone1.png"),
+  "headphone2.png": require("../assets/img/headphone2.png"),
+  // Thêm các ảnh khác nếu cần
 };
 
 // @ts-ignore
 const ProductGridScreen = ({ route, navigation }) => {
   const { categoryName } = route.params;
-  const { getCartItemCount } = useCart(); // <-- 2. LẤY HÀM
+  const { getCartItemCount } = useCart();
   const itemCount = getCartItemCount();
 
-  // @ts-ignore
-  const data = MOCK_DATA[categoryName] || MOCK_DATA["Fresh Fruits"];
+  // --- 3. THÊM STATE CHO FETCHING ---
+  const [products, setProducts] = useState<FrontendProduct[]>([]);
+  const [relevantProducts, setRelevantProducts] = useState<RelevantProduct[]>(
+    []
+  ); // State cho sản phẩm liên quan (tạm thời rỗng)
+  const [bannerImage, setBannerImage] = useState<ImageSourcePropType | null>(
+    null
+  ); // State cho banner (tạm thời null)
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // ... (renderHeader giữ nguyên)
+  // --- 4. THÊM LOGIC FETCH API ---
+  useEffect(() => {
+    fetchProductsByCategory();
+  }, [categoryName]);
+
+  const fetchProductsByCategory = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const API_BASE_URL = "http://localhost:8080"; // <<< THAY IP NẾU CẦN
+
+      const res = await fetch(
+        `${API_BASE_URL}/api/products/category/${categoryName.toLowerCase()}`
+      );
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Fetch failed: ${res.status} - ${errorText}`);
+      }
+      const data = await res.json();
+      console.log(`Data for ${categoryName}:`, data);
+
+      const mapped: FrontendProduct[] = data.map((item: any) => {
+        const localImg = LOCAL_IMAGE_MAP[item.imageURL];
+
+        let detailScreenTarget: "ProductDetailGeneral" | "ProductDetailVariant";
+        if (
+          categoryName.toLowerCase() === "fashion" ||
+          categoryName.toLowerCase() === "beauty"
+        ) {
+          detailScreenTarget = "ProductDetailVariant";
+        } else {
+          detailScreenTarget = "ProductDetailGeneral";
+        }
+
+        return {
+          id: item.productId?.toString() ?? `temp_${Math.random()}`,
+          name: item.name || "Unnamed Product",
+          rating: item.rating || 0,
+          price: item.price || 0,
+          image: localImg ?? { uri: `${API_BASE_URL}/images/${item.imageURL}` },
+          detailScreen: detailScreenTarget,
+        };
+      });
+
+      setProducts(mapped);
+      // TODO: Cần fetch cả relevantProducts và banner từ API (nếu có)
+      // setRelevantProducts(...)
+      // setBannerImage(...)
+    } catch (error: any) {
+      console.error("Error loading products:", error);
+      setError(`Could not load products. ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- HEADER (Giữ nguyên) ---
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -132,7 +130,7 @@ const ProductGridScreen = ({ route, navigation }) => {
       >
         <Ionicons name="arrow-back" size={24} color={COLORS.text} />
       </TouchableOpacity>
-      <Text style={globalStyles.headerTitle}>{categoryName}</Text>
+      <Text style={globalStyles.headerTitle}>{categoryName || "Products"}</Text>
       <View style={globalStyles.headerIconContainer}>
         <TouchableOpacity
           style={globalStyles.iconButton}
@@ -157,39 +155,67 @@ const ProductGridScreen = ({ route, navigation }) => {
     </View>
   );
 
+  // --- LOADING / ERROR (Thêm mới) ---
+  if (loading) {
+    return (
+      <SafeAreaView style={globalStyles.safeArea}>
+        {renderHeader()}
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          style={{ marginTop: 50 }}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  if (error) {
+    return (
+      <SafeAreaView style={globalStyles.safeArea}>
+        {renderHeader()}
+        <View style={{ alignItems: "center", marginTop: 50 }}>
+          <Text style={{ color: COLORS.textLight }}>{error}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // --- HIỂN THỊ SẢN PHẨM ---
   return (
     <SafeAreaView style={globalStyles.safeArea}>
       {renderHeader()}
-
       <FlatList
         ListHeaderComponent={
           <>
             <View style={{ paddingHorizontal: SIZES.padding }}>
               <SearchBar />
             </View>
-            <View style={styles.bannerContainer}>
-              <Image
-                source={data.banner}
-                style={styles.bannerImage}
-                resizeMode="cover"
-              />
-            </View>
+            {/* Hiển thị banner nếu có */}
+            {bannerImage && (
+              <View style={styles.bannerContainer}>
+                <Image
+                  source={bannerImage}
+                  style={styles.bannerImage}
+                  resizeMode="cover"
+                />
+              </View>
+            )}
           </>
         }
-        data={data.products} // <-- data.products giờ đã có type
-        // --- 3. SỬA LỖI RENDERITEM ---
+        data={products} // <-- Sử dụng state
+        // --- 5. CẬP NHẬT RENDER ITEM VỚI ONPRESS ---
         renderItem={({ item }) => (
           <ProductGridItem
-            item={item} // <-- Truyền cả object 'item'
+            item={item} // <-- Truyền cả object
             onPress={() =>
               navigation.navigate(item.detailScreen, {
-                productId: item.id,
-                name: item.name,
+                productId: item.id, // <-- Gửi productId
+                name: item.name, // <-- Gửi name
               })
             }
           />
         )}
-        keyExtractor={(item) => item.id} // <-- Lỗi 'never' đã được sửa
+        keyExtractor={(item) => item.id}
         numColumns={2}
         columnWrapperStyle={styles.row}
         showsVerticalScrollIndicator={false}
@@ -198,28 +224,27 @@ const ProductGridScreen = ({ route, navigation }) => {
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
-            <View style={styles.relevantContainer}>
-              <View style={styles.relevantHeader}>
-                <Text style={globalStyles.sectionTitle}>Relevant products</Text>
-                <TouchableOpacity>
-                  <Text style={globalStyles.viewAllText}>See all</Text>
-                </TouchableOpacity>
+            {/* Hiển thị relevant products nếu có */}
+            {relevantProducts.length > 0 && (
+              <View style={styles.relevantContainer}>
+                <View style={styles.relevantHeader}>
+                  <Text style={globalStyles.sectionTitle}>
+                    Relevant products
+                  </Text>
+                  <TouchableOpacity>
+                    <Text style={globalStyles.viewAllText}>See all</Text>
+                  </TouchableOpacity>
+                </View>
+                <FlatList
+                  data={relevantProducts} // <-- Sử dụng state
+                  // @ts-ignore
+                  renderItem={({ item }) => <ProductCard item={item} />} // <-- Sửa lại prop
+                  keyExtractor={(item) => item.id}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                />
               </View>
-              <FlatList
-                data={data.relevantProducts}
-                renderItem={({ item }) => (
-                  <ProductCard
-                    name={item.name}
-                    rating={item.rating}
-                    price={item.price}
-                    imageSource={item.image}
-                  />
-                )}
-                keyExtractor={(item) => item.id}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-              />
-            </View>
+            )}
             <View style={{ height: 50 }} />
           </View>
         }
@@ -228,11 +253,9 @@ const ProductGridScreen = ({ route, navigation }) => {
   );
 };
 
-// ... (Styles giữ nguyên)
+// --- STYLES (Cập nhật) ---
 const styles = StyleSheet.create({
-  backButton: {
-    marginRight: 15,
-  },
+  backButton: { marginRight: 15 },
   profileIcon: {
     width: 30,
     height: 30,
@@ -240,10 +263,7 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     overflow: "hidden",
   },
-  profileImage: {
-    width: "100%",
-    height: "100%",
-  },
+  profileImage: { width: "100%", height: "100%" },
   bannerContainer: {
     height: 200,
     borderRadius: SIZES.radius,
@@ -251,10 +271,7 @@ const styles = StyleSheet.create({
     marginBottom: SIZES.padding,
     marginHorizontal: SIZES.padding,
   },
-  bannerImage: {
-    width: "100%",
-    height: "100%",
-  },
+  bannerImage: { width: "100%", height: "100%" },
   row: {
     justifyContent: "space-between",
     paddingHorizontal: SIZES.padding,
@@ -266,20 +283,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginVertical: 15,
   },
-  seeAllText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  relevantContainer: {
-    marginTop: 10,
-  },
+  seeAllText: { fontSize: 16, fontWeight: "600", color: COLORS.text },
+  relevantContainer: { marginTop: 10 },
   relevantHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
   },
   cartBadge: {
+    // Thêm style badge
     position: "absolute",
     right: -8,
     top: -5,
@@ -291,6 +303,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cartBadgeText: {
+    // Thêm style badge text
     color: "white",
     fontSize: 10,
     fontWeight: "bold",
