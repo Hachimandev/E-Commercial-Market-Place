@@ -1,6 +1,4 @@
-// E-Commercial-Market-Place/components/ProductGridItem.tsx
-
-import React, { useContext } from "react"; // <-- Import useContext
+import React, { useContext } from "react";
 import {
   View,
   Text,
@@ -12,13 +10,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SIZES, globalStyles } from "../constants/styles";
-import { useCart } from "../context/CartContext"; // <-- 1. Import useCart
+import { useCart } from "../context/CartContext";
 
 const { width } = Dimensions.get("window");
 const cardWidth = (width - SIZES.padding * 3) / 2;
 
 interface ProductGridItemProps {
-  // Thay đổi: Nhận toàn bộ item thay vì từng prop
   item: {
     id: string;
     name: string;
@@ -30,10 +27,9 @@ interface ProductGridItemProps {
 }
 
 const ProductGridItem: React.FC<ProductGridItemProps> = ({ item, onPress }) => {
-  const { addItem } = useCart(); // <-- 2. Lấy hàm addItem
+  const { addItem } = useCart();
 
   const handleAddItem = () => {
-    // 3. Gọi hàm addItem (quantity mặc định là 1)
     addItem(item);
   };
 
@@ -65,7 +61,6 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ item, onPress }) => {
         </View>
         <View style={styles.priceContainer}>
           <Text style={styles.priceText}>${item.price}</Text>
-          {/* 4. Thêm onPress vào nút + */}
           <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
             <Ionicons name="add" size={20} color={COLORS.primary} />
           </TouchableOpacity>
@@ -75,7 +70,6 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ item, onPress }) => {
   );
 };
 
-// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   card: {
     width: cardWidth,
