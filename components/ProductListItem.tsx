@@ -1,5 +1,3 @@
-// E-Commercial-Market-Place/components/ProductListItem.tsx
-
 import React from "react";
 import {
   View,
@@ -11,10 +9,9 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SIZES, globalStyles } from "../constants/styles";
-import { useCart } from "../context/CartContext"; // <-- 1. Import useCart
+import { useCart } from "../context/CartContext";
 
 interface ProductListItemProps {
-  // Thay đổi: Nhận toàn bộ item
   item: {
     id: string;
     name: string;
@@ -26,10 +23,9 @@ interface ProductListItemProps {
 }
 
 const ProductListItem: React.FC<ProductListItemProps> = ({ item, onPress }) => {
-  const { addItem } = useCart(); // <-- 2. Lấy hàm addItem
+  const { addItem } = useCart();
 
   const handleAddItem = () => {
-    // 3. Gọi hàm addItem
     addItem(item);
   };
 
@@ -60,7 +56,6 @@ const ProductListItem: React.FC<ProductListItemProps> = ({ item, onPress }) => {
       </View>
       <View style={styles.priceContainer}>
         <Text style={styles.priceText}>${item.price}</Text>
-        {/* 4. Thêm onPress vào nút + */}
         <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
           <Ionicons name="add" size={20} color={COLORS.primary} />
         </TouchableOpacity>
@@ -69,7 +64,6 @@ const ProductListItem: React.FC<ProductListItemProps> = ({ item, onPress }) => {
   );
 };
 
-// ... (Styles giữ nguyên)
 const styles = StyleSheet.create({
   card: {
     flexDirection: "row",

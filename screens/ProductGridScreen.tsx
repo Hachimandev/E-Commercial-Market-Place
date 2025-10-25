@@ -1,5 +1,3 @@
-// E-Commercial-Market-Place/screens/ProductGridScreen.tsx
-
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -10,16 +8,15 @@ import {
   Image,
   ImageSourcePropType,
   ActivityIndicator,
-} from "react-native"; // <-- Thêm ActivityIndicator
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import SearchBar from "../components/SearchBar";
 import ProductGridItem from "../components/ProductGridItem";
 import ProductCard from "../components/ProductCard";
-import { useCart } from "../context/CartContext"; // <-- Import useCart
+import { useCart } from "../context/CartContext";
 
-// --- 1. ĐỊNH NGHĨA TYPES ---
 interface FrontendProduct {
   id: string;
   name: string;
@@ -37,7 +34,6 @@ interface RelevantProduct {
   image: ImageSourcePropType;
 }
 
-// --- 2. LOCAL IMAGE MAP (Giữ nguyên hoặc cập nhật) ---
 const LOCAL_IMAGE_MAP: Record<string, any> = {
   "iphone15.jpg": require("../assets/img/iphone.png"),
   "macbook.jpg": require("../assets/img/macbook.png"),
@@ -54,18 +50,16 @@ const ProductGridScreen = ({ route, navigation }) => {
   const { getCartItemCount } = useCart();
   const itemCount = getCartItemCount();
 
-  // --- 3. THÊM STATE CHO FETCHING ---
   const [products, setProducts] = useState<FrontendProduct[]>([]);
   const [relevantProducts, setRelevantProducts] = useState<RelevantProduct[]>(
     []
-  ); // State cho sản phẩm liên quan (tạm thời rỗng)
+  );
   const [bannerImage, setBannerImage] = useState<ImageSourcePropType | null>(
     null
-  ); // State cho banner (tạm thời null)
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // --- 4. THÊM LOGIC FETCH API ---
   useEffect(() => {
     fetchProductsByCategory();
   }, [categoryName]);
@@ -74,7 +68,7 @@ const ProductGridScreen = ({ route, navigation }) => {
     setLoading(true);
     setError("");
     try {
-      const API_BASE_URL = "http://localhost:8080"; // <<< THAY IP NẾU CẦN
+      const API_BASE_URL = "http://localhost:8080";
 
       const res = await fetch(
         `${API_BASE_URL}/api/products/category/${categoryName.toLowerCase()}`
@@ -110,9 +104,6 @@ const ProductGridScreen = ({ route, navigation }) => {
       });
 
       setProducts(mapped);
-      // TODO: Cần fetch cả relevantProducts và banner từ API (nếu có)
-      // setRelevantProducts(...)
-      // setBannerImage(...)
     } catch (error: any) {
       console.error("Error loading products:", error);
       setError(`Could not load products. ${error.message}`);
@@ -121,7 +112,7 @@ const ProductGridScreen = ({ route, navigation }) => {
     }
   };
 
-  // --- HEADER (Giữ nguyên) ---
+  // --- HEADER --
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -155,7 +146,7 @@ const ProductGridScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // --- LOADING / ERROR (Thêm mới) ---
+  // --- LOADING / ERROR --
   if (loading) {
     return (
       <SafeAreaView style={globalStyles.safeArea}>
@@ -190,7 +181,7 @@ const ProductGridScreen = ({ route, navigation }) => {
             <View style={{ paddingHorizontal: SIZES.padding }}>
               <SearchBar />
             </View>
-            {/* Hiển thị banner nếu có */}
+
             {bannerImage && (
               <View style={styles.bannerContainer}>
                 <Image
@@ -202,15 +193,14 @@ const ProductGridScreen = ({ route, navigation }) => {
             )}
           </>
         }
-        data={products} // <-- Sử dụng state
-        // --- 5. CẬP NHẬT RENDER ITEM VỚI ONPRESS ---
+        data={products}
         renderItem={({ item }) => (
           <ProductGridItem
-            item={item} // <-- Truyền cả object
+            item={item}
             onPress={() =>
               navigation.navigate(item.detailScreen, {
-                productId: item.id, // <-- Gửi productId
-                name: item.name, // <-- Gửi name
+                productId: item.id,
+                name: item.name,
               })
             }
           />
@@ -224,7 +214,6 @@ const ProductGridScreen = ({ route, navigation }) => {
             <TouchableOpacity style={styles.seeAllButton}>
               <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
-            {/* Hiển thị relevant products nếu có */}
             {relevantProducts.length > 0 && (
               <View style={styles.relevantContainer}>
                 <View style={styles.relevantHeader}>
@@ -236,9 +225,9 @@ const ProductGridScreen = ({ route, navigation }) => {
                   </TouchableOpacity>
                 </View>
                 <FlatList
-                  data={relevantProducts} // <-- Sử dụng state
+                  data={relevantProducts}
                   // @ts-ignore
-                  renderItem={({ item }) => <ProductCard item={item} />} // <-- Sửa lại prop
+                  renderItem={({ item }) => <ProductCard item={item} />}
                   keyExtractor={(item) => item.id}
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -253,7 +242,7 @@ const ProductGridScreen = ({ route, navigation }) => {
   );
 };
 
-// --- STYLES (Cập nhật) ---
+// --- STYLES ---
 const styles = StyleSheet.create({
   backButton: { marginRight: 15 },
   profileIcon: {
