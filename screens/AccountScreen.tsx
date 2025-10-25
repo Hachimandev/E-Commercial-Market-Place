@@ -2,24 +2,15 @@ import React, { useState, useEffect } from "react";
 import { View, StyleSheet, Image, ScrollView, Alert } from "react-native";
 import { TextInput, Button, Text, useTheme, Card } from "react-native-paper";
 import { useAuth } from "../context/AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 const AccountScreen = () => {
+  const navigation: any = useNavigation();
   const { colors } = useTheme();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
-  const { user, logout, getProfile } = useAuth();
-
-  useEffect(() => {
-    (async () => {
-      const data = await getProfile();
-      if (data) {
-        setName(data.name || "");
-        setPhone(data.phone || "");
-        setAddress(data.address || "");
-      }
-    })();
-  }, []);
+  const { user, logout } = useAuth();
 
   const handleSave = () => {
     if (!name.trim() || !phone.trim() || !address.trim()) {
@@ -85,7 +76,13 @@ const AccountScreen = () => {
       {/* Logout */}
       <Button
         mode="outlined"
-        onPress={logout}
+        onPress={async () => {
+          await logout();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "Login" }],
+          });
+        }}
         style={styles.logoutButton}
         textColor="#d32f2f"
         icon="logout"

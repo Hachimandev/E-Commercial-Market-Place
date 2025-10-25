@@ -21,7 +21,6 @@ interface AuthContextType {
   isLoggedIn: boolean;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  getProfile: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -29,8 +28,29 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const API_URL = "http://localhost:8080/api/auth";
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem("token");
+        const storedUser = await AsyncStorage.getItem("user");
+
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (err) {
+        console.error("Error loading user data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   const login = async (
     username: string,
@@ -72,63 +92,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setToken(null);
   };
 
-  const getProfile = async (): Promise<User | null> => {
-    try {
-      const storedToken = await AsyncStorage.getItem("token");
-      if (!storedToken) return null;
-
-      const res = await fetch(`localhost:8080/api/user/me`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${storedToken}`,
-        },
-      });
-
-      if (!res.ok) {
-        console.log(await res.text());
-        throw new Error("Cannot fetch profile");
-      }
-
-      const data = await res.json();
-      const profile: User = {
-        username: data.username,
-        role: data.role,
-        name: data.fullName || data.name,
-        phone: data.phone,
-        address: data.address,
-      };
-
-      setUser(profile);
-      return profile;
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
-  };
-
-  useEffect(() => {
-    (async () => {
-      const storedToken = await AsyncStorage.getItem("token");
-      const storedUser = await AsyncStorage.getItem("user");
-      if (storedToken) {
-        setToken(storedToken);
-        if (storedUser) {
-          setUser(JSON.parse(storedUser));
-        } else {
-          await getProfile();
-        }
-      }
-    })();
-  }, []);
-
   const isLoggedIn = !!token;
 
   return (
-    <AuthContext.Provider
-      value={{ user, token, login, logout, getProfile, isLoggedIn }}
-    >
-      {children}
+    <AuthContext.Provider value={{ user, token, login, logout, isLoggedIn }}>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

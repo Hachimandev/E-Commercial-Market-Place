@@ -10,7 +10,7 @@ const LoginScreen = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const handleLogin = async () => {
     if (!username.trim() || !password.trim()) {
@@ -20,11 +20,10 @@ const LoginScreen = () => {
 
     const success = await login(username, password);
 
-    if (success) {
-      Alert.alert("Success", "Login successful!");
-      navigation.navigate("AccountTab");
+    if (!success) {
+      Alert.alert("Sai thông tin đăng nhập");
     } else {
-      Alert.alert("Login Failed", "Invalid username or password.");
+      Alert.alert("Lỗi", "Tên đăng nhập hoặc mật khẩu không đúng");
     }
   };
 

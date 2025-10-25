@@ -10,6 +10,7 @@ import { StatusBar } from "expo-status-bar";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { Provider as PaperProvider } from "react-native-paper";
+import RootNavigator from "./navigation/RootNavigator";
 
 const RootStack = createNativeStackNavigator();
 
@@ -21,23 +22,7 @@ export default function App() {
           <SafeAreaProvider>
             <NavigationContainer>
               <StatusBar style="dark" />
-              <RootStack.Navigator
-                screenOptions={{
-                  headerShown: false,
-                }}
-              >
-                <RootStack.Screen
-                  name="MainTabs"
-                  component={BottomTabNavigator}
-                />
-                <RootStack.Screen
-                  name="CheckoutStack"
-                  component={CheckoutStackNavigator}
-                  options={{
-                    presentation: "modal",
-                  }}
-                />
-              </RootStack.Navigator>
+              <RootNavigator />
             </NavigationContainer>
           </SafeAreaProvider>
         </PaperProvider>
