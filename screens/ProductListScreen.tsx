@@ -16,6 +16,7 @@ import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import SearchBar from "../components/SearchBar";
 import ProductListItem from "../components/ProductListItem";
 import { useCart } from "../context/CartContext";
+import { api, API_BASE_URL } from "../api/api";
 
 const filterTabs = ["Best Sales", "Best Matched", "Popular"];
 
@@ -54,54 +55,41 @@ const ProductListScreen = ({ route, navigation }) => {
 
   const fetchProductsByCategory = async () => {
     setLoading(true);
+    setError("");
     try {
-      const API_BASE_URL = "http://localhost:8080";
-
-      const res = await fetch(
-        `${API_BASE_URL}/api/products/category/${categoryName.toLowerCase()}`
+      // ✅ dùng api.get thay vì fetch
+      const data = await api.get(
+        `/api/products/category/${categoryName.toLowerCase()}`
       );
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Fetch failed: ${res.status} - ${errorText}`);
-      }
-      const data = await res.json();
-
       console.log(`Data for ${categoryName}:`, data);
 
       const mapped: FrontendProduct[] = data.map((item: any) => {
         const localImg = LOCAL_IMAGE_MAP[item.imageURL];
 
-        let detailScreenTarget: "ProductDetailGeneral" | "ProductDetailVariant";
-        if (
+        const detailScreenTarget =
           categoryName.toLowerCase() === "fashion" ||
           categoryName.toLowerCase() === "beauty"
-        ) {
-          detailScreenTarget = "ProductDetailVariant";
-        } else {
-          detailScreenTarget = "ProductDetailGeneral";
-        }
+            ? "ProductDetailVariant"
+            : "ProductDetailGeneral";
 
         return {
           id: item.productId?.toString() ?? `temp_${Math.random()}`,
           name: item.name || "Unnamed Product",
           rating: item.rating || 0,
           price: item.price || 0,
-          image: localImg ?? {
-            uri: `${API_BASE_URL}/images/${item.imageURL}`,
-          },
+          image: localImg ?? { uri: `${API_BASE_URL}/images/${item.imageURL}` },
           detailScreen: detailScreenTarget,
         };
       });
 
       setProducts(mapped);
-    } catch (error: any) {
-      console.error("Error loading products:", error);
-      setError(`Could not load products. ${error.message}`);
+    } catch (err: any) {
+      console.error("Error loading products:", err);
+      setError(`Không thể tải sản phẩm: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
-
   // --- HEADER  ---
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
