@@ -1,5 +1,3 @@
-// E-Commercial-Market-Place/navigation/RootNavigator.tsx
-
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import BottomTabNavigator from "./BottomTabNavigator";
@@ -7,6 +5,7 @@ import CheckoutStackNavigator from "./CheckoutStackNavigator";
 import AdminDrawerNavigator from "./AdminDrawerNavigator";
 import LoginScreen from "../screens/LoginScreen";
 import LoadingScreen from "../screens/LoadingScreen";
+import RegisterScreen from "../screens/RegisterScreen";
 import { useAuth } from "../context/AuthContext";
 
 const RootStack = createNativeStackNavigator();
@@ -26,17 +25,17 @@ const RootNavigator = () => {
 
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false }}>
-      {/* Nếu chưa đăng nhập → vào Login */}
       {!isLoggedIn ? (
-        <RootStack.Screen name="Login" component={LoginScreen} />
+        <>
+          <RootStack.Screen name="Login" component={LoginScreen} />
+          <RootStack.Screen name="RegisterScreen" component={RegisterScreen} />
+        </>
       ) : user?.role === "SELLER" ? (
-        // Nếu là SELLER → vào AdminDashboard
         <RootStack.Screen
           name="AdminDashboard"
           component={AdminDrawerNavigator}
         />
       ) : (
-        // Nếu là người dùng thường → vào MainTabs
         <>
           <RootStack.Screen name="MainTabs" component={BottomTabNavigator} />
           <RootStack.Screen
