@@ -29,6 +29,9 @@ const AccountScreen = () => {
   const [phone, setPhone] = useState(user?.phone || "");
   const [address, setAddress] = useState(user?.address || "");
 
+  const handleLogout = () => {
+    logout();
+  };
   const handleSave = () => {
     if (!name.trim() || !phone.trim() || !address.trim()) {
       Alert.alert("⚠️ Lỗi xác thực", "Vui lòng nhập đầy đủ tất cả các trường.");
@@ -147,13 +150,7 @@ const AccountScreen = () => {
           icon="logout"
           mode="outlined"
           textColor="#d32f2f"
-          onPress={async () => {
-            await logout();
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Login" }],
-            });
-          }}
+          onPress={handleLogout}
           style={styles.logoutButton}
           labelStyle={{ fontSize: 16, fontWeight: "600" }}
         >

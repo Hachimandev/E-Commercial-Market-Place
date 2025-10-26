@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { api, API_BASE_URL } from "../api/api";
 
 interface User {
   username: string;
@@ -29,8 +30,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const API_URL = "http://localhost:8080/api/auth";
 
   useEffect(() => {
     const loadUserData = async () => {
@@ -57,7 +56,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     password: string
   ): Promise<boolean> => {
     try {
-      const res = await fetch(`${API_URL}/login`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
@@ -73,9 +72,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         phone: data.phone,
         address: data.address,
       };
-      console.log(data);
+
       await AsyncStorage.setItem("token", data.token);
       await AsyncStorage.setItem("user", JSON.stringify(userData));
+
       setToken(data.token);
       setUser(userData);
 
@@ -88,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     await AsyncStorage.removeItem("token");
+    await AsyncStorage.removeItem("user");
     setUser(null);
     setToken(null);
   };
