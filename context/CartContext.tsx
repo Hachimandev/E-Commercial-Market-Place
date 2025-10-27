@@ -1,147 +1,76 @@
-// E-Commercial-Market-Place/context/CartContext.tsx
+import React, { createContext, useContext } from "react";
+import { api } from "../api/api";
+import { CartAPI } from "../types/cart";
 
-import React, { createContext, useContext, useReducer, ReactNode } from "react";
-import { ImageSourcePropType } from "react-native";
-
-// 1. Định nghĩa kiểu dữ liệu (Giữ nguyên)
-export interface CartItem {
-  id: string;
-  name: string;
-  price: number;
-  image: ImageSourcePropType;
-  quantity: number;
-}
-interface CartState {
-  items: CartItem[];
+interface CartContextType {
+  loadCart: () => Promise<CartAPI>;
+  addItem: (productId: number, quantity: number) => Promise<CartAPI>;
+  updateQuantity: (cartItemId: string, quantity: number) => Promise<CartAPI>;
+  removeItem: (cartItemId: string) => Promise<CartAPI>;
 }
 
-// --- CẬP NHẬT INTERFACE ---
-interface CartContextProps {
-  state: CartState;
-  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  updateQuantity: (itemId: string, quantity: number) => void;
-  removeItem: (itemId: string) => void;
-  clearCart: () => void; // <-- THÊM HÀM MỚI
-  getCartTotal: () => number;
-  getCartItemCount: () => number;
-}
-// --- KẾT THÚC CẬP NHẬT ---
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// 2. Tạo Context (Giữ nguyên)
-const CartContext = createContext<CartContextProps | undefined>(undefined);
-
-// 3. Định nghĩa Reducer (Cập nhật)
-type CartAction =
-  | {
-      type: "ADD_ITEM";
-      payload: { item: Omit<CartItem, "quantity">; quantity: number };
-    }
-  | { type: "UPDATE_QUANTITY"; payload: { itemId: string; quantity: number } }
-  | { type: "REMOVE_ITEM"; payload: { itemId: string } }
-  | { type: "CLEAR_CART" }; // <-- THÊM ACTION MỚI
-
-const cartReducer = (state: CartState, action: CartAction): CartState => {
-  switch (action.type) {
-    case "ADD_ITEM": {
-      const { item, quantity } = action.payload;
-      const existingItem = state.items.find((i) => i.id === item.id);
-
-      if (existingItem) {
-        return {
-          ...state,
-          items: state.items.map((i) =>
-            i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
-          ),
-        };
-      }
-      return {
-        ...state,
-        items: [...state.items, { ...item, quantity }],
-      };
-    }
-
-    case "UPDATE_QUANTITY": {
-      // ... (Giữ nguyên)
-      const { itemId, quantity } = action.payload;
-      return {
-        ...state,
-        items: state.items.map((i) =>
-          i.id === itemId ? { ...i, quantity } : i
-        ),
-      };
-    }
-
-    case "REMOVE_ITEM": {
-      // ... (Giữ nguyên)
-      const { itemId } = action.payload;
-      return {
-        ...state,
-        items: state.items.filter((i) => i.id !== itemId),
-      };
-    }
-
-    // --- THÊM CASE MỚI ---
-    case "CLEAR_CART":
-      return {
-        ...state,
-        items: [], // Trả về mảng rỗng
-      };
-    // --- KẾT THÚC THÊM ---
-
-    default:
-      return state;
-  }
-};
-
-// 4. Tạo Provider (Cập nhật)
-export const CartProvider: React.FC<{ children: ReactNode }> = ({
+export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] });
-
-  const addItem = (item: Omit<CartItem, "quantity">, quantity: number = 1) => {
-    dispatch({ type: "ADD_ITEM", payload: { item, quantity } });
-  };
-
-  const updateQuantity = (itemId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(itemId);
-    } else {
-      dispatch({ type: "UPDATE_QUANTITY", payload: { itemId, quantity } });
+  const loadCart = async (): Promise<CartAPI> => {
+    try {
+      const cartData = await api.get("/api/cart");
+      return cartData as CartAPI;
+    } catch (error) {
+      console.error("Failed to load cart:", error);
+      throw error;
     }
   };
 
-  const removeItem = (itemId: string) => {
-    dispatch({ type: "REMOVE_ITEM", payload: { itemId } });
+  const addItem = async (
+    productId: number,
+    quantity: number
+  ): Promise<CartAPI> => {
+    try {
+      const updatedCart = await api.post("/api/cart/items", {
+        productId,
+        quantity,
+      });
+      return updatedCart as CartAPI;
+    } catch (error) {
+      console.error("Failed to add item:", error);
+      throw error;
+    }
+  };
+  const updateQuantity = async (
+    cartItemId: string,
+    quantity: number
+  ): Promise<CartAPI> => {
+    try {
+      const updatedCart = await api.put(`/api/cart/items/${cartItemId}`, {
+        quantity,
+      });
+      return updatedCart as CartAPI;
+    } catch (error) {
+      console.error("Failed to update quantity:", error);
+      throw error;
+    }
   };
 
-  // --- THÊM HÀM MỚI ---
-  const clearCart = () => {
-    dispatch({ type: "CLEAR_CART" });
-  };
-  // --- KẾT THÚC THÊM ---
-
-  const getCartTotal = () => {
-    return state.items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
-  };
-
-  const getCartItemCount = () => {
-    return state.items.reduce((total, item) => total + item.quantity, 0);
+  const removeItem = async (cartItemId: string): Promise<CartAPI> => {
+    try {
+      const updatedCart = await api.delete(`/api/cart/items/${cartItemId}`);
+      return updatedCart as CartAPI;
+    } catch (error) {
+      console.error("Failed to remove item:", error);
+      throw error;
+    }
   };
 
   return (
     <CartContext.Provider
       value={{
-        state,
+        loadCart,
         addItem,
         updateQuantity,
         removeItem,
-        clearCart, // <-- Thêm vào value
-        getCartTotal,
-        getCartItemCount,
       }}
     >
       {children}
@@ -149,10 +78,9 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({
   );
 };
 
-// 5. Tạo Hook (Giữ nguyên)
 export const useCart = () => {
   const context = useContext(CartContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error("useCart must be used within a CartProvider");
   }
   return context;

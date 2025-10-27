@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import SearchBar from "../components/SearchBar";
 import ProductListItem from "../components/ProductListItem";
 import { useCart } from "../context/CartContext";
 import { api, API_BASE_URL } from "../api/api";
+import { getLocalImage } from "../constants/imageMap";
+import { useFocusEffect } from "@react-navigation/native";
 
 const filterTabs = ["Best Sales", "Best Matched", "Popular"];
 
@@ -29,20 +31,41 @@ interface FrontendProduct {
   detailScreen: "ProductDetailGeneral" | "ProductDetailVariant";
 }
 
-const LOCAL_IMAGE_MAP: Record<string, any> = {
-  "iphone15.jpg": require("../assets/img/iphone.png"),
-  "macbook.jpg": require("../assets/img/macbook.png"),
-  "lipstick.jpg": require("../assets/img/lipstick.png"),
-  "mango.jpg": require("../assets/img/cherry.png"),
-  "headphone1.png": require("../assets/img/headphone1.png"),
-  "headphone2.png": require("../assets/img/headphone2.png"),
-};
-
 // @ts-ignore
 const ProductListScreen = ({ route, navigation }) => {
   const { categoryName } = route.params;
-  const { getCartItemCount } = useCart();
-  const itemCount = getCartItemCount();
+  const { loadCart } = useCart();
+  const [itemCount, setItemCount] = useState(0);
+  const refreshCartCount = useCallback(async () => {
+    try {
+      console.log("Refreshing cart count...");
+      const cart = await loadCart();
+      setItemCount(cart.items.length);
+    } catch (e) {
+      console.error("Failed to refresh cart count", e);
+    }
+  }, [loadCart]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshCartCount();
+    }, [refreshCartCount])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCartCount = async () => {
+        try {
+          const cart = await loadCart();
+          setItemCount(cart.items.length);
+        } catch (e) {
+          console.error("Failed to load cart count", e);
+          setItemCount(0);
+        }
+      };
+      fetchCartCount();
+    }, [loadCart])
+  );
 
   const [activeTab, setActiveTab] = useState("Best Sales");
   const [products, setProducts] = useState<FrontendProduct[]>([]);
@@ -57,15 +80,12 @@ const ProductListScreen = ({ route, navigation }) => {
     setLoading(true);
     setError("");
     try {
-      // ✅ dùng api.get thay vì fetch
       const data = await api.get(
         `/api/products/category/${categoryName.toLowerCase()}`
       );
       console.log(`Data for ${categoryName}:`, data);
 
       const mapped: FrontendProduct[] = data.map((item: any) => {
-        const localImg = LOCAL_IMAGE_MAP[item.imageURL];
-
         const detailScreenTarget =
           categoryName.toLowerCase() === "fashion" ||
           categoryName.toLowerCase() === "beauty"
@@ -77,7 +97,7 @@ const ProductListScreen = ({ route, navigation }) => {
           name: item.name || "Unnamed Product",
           rating: item.rating || 0,
           price: item.price || 0,
-          image: localImg ?? { uri: `${API_BASE_URL}/images/${item.imageURL}` },
+          image: getLocalImage(item.imageURL, API_BASE_URL),
           detailScreen: detailScreenTarget,
         };
       });
@@ -90,7 +110,8 @@ const ProductListScreen = ({ route, navigation }) => {
       setLoading(false);
     }
   };
-  // --- HEADER  ---
+
+  // --- HEADER  ---
   const renderHeader = () => (
     <View style={[globalStyles.header, { paddingHorizontal: SIZES.padding }]}>
       <TouchableOpacity
@@ -107,7 +128,7 @@ const ProductListScreen = ({ route, navigation }) => {
         >
           <View>
             <Ionicons name="cart-outline" size={24} color={COLORS.text} />
-            {itemCount > 0 && (
+            {itemCount > 0 && ( // Dùng state itemCount
               <View style={styles.cartBadge}>
                 <Text style={styles.cartBadgeText}>{itemCount}</Text>
               </View>
@@ -124,7 +145,7 @@ const ProductListScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // --- FILTER TABS  ---
+  // --- FILTER TABS  ---
   const renderFilterTabs = () => (
     <View style={styles.filterContainer}>
       {filterTabs.map((tab) => (
@@ -144,12 +165,29 @@ const ProductListScreen = ({ route, navigation }) => {
     </View>
   );
 
-  // --- HIỂN THỊ LOADING / LỖI (Giữ nguyên) ---
+  // --- LOADING / ERROR ---
   if (loading) {
-    /* ... */
+    return (
+      <SafeAreaView style={globalStyles.safeArea}>
+        {renderHeader()}
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          style={{ marginTop: 50 }}
+        />
+      </SafeAreaView>
+    );
   }
+
   if (error) {
-    /* ... */
+    return (
+      <SafeAreaView style={globalStyles.safeArea}>
+        {renderHeader()}
+        <View style={{ alignItems: "center", marginTop: 50 }}>
+          <Text style={{ color: COLORS.textLight }}>{error}</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   // --- HIỂN THỊ SẢN PHẨM ---
@@ -167,28 +205,28 @@ const ProductListScreen = ({ route, navigation }) => {
         }
         data={products}
         keyExtractor={(item) => item.id}
-        // --- 5. CẬP NHẬT RENDER ITEM VỚI ONPRESS ---
         renderItem={({ item }) => (
           <View style={{ paddingHorizontal: SIZES.padding }}>
             <ProductListItem
               item={item}
               onPress={() =>
                 navigation.navigate(item.detailScreen, {
-                  productId: item.id, // <-- Gửi productId
-                  name: item.name, // <-- Gửi name
+                  productId: item.id,
+                  name: item.name,
                 })
               }
+              onCartUpdated={refreshCartCount}
             />
           </View>
         )}
         showsVerticalScrollIndicator={false}
-        ListFooterComponent={<View style={{ height: 80 }} />}
+        ListFooterComponent={<View style={{ height: 80 }} />} // Đệm dưới cùng
       />
     </SafeAreaView>
   );
 };
 
-// --- STYLES (Giữ nguyên) ---
+// --- STYLES ---
 const styles = StyleSheet.create({
   backButton: { marginRight: 15 },
   profileIcon: {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import ProductGridItem from "../components/ProductGridItem";
 import ProductCard from "../components/ProductCard";
 import { useCart } from "../context/CartContext";
 import { api, API_BASE_URL } from "../api/api";
+import { getLocalImage } from "../constants/imageMap";
+import { useFocusEffect } from "@react-navigation/native";
 
 interface FrontendProduct {
   id: string;
@@ -35,21 +37,42 @@ interface RelevantProduct {
   image: ImageSourcePropType;
 }
 
-const LOCAL_IMAGE_MAP: Record<string, any> = {
-  "iphone15.jpg": require("../assets/img/iphone.png"),
-  "macbook.jpg": require("../assets/img/macbook.png"),
-  "lipstick.jpg": require("../assets/img/lipstick.png"),
-  "mango.jpg": require("../assets/img/cherry.png"),
-  "headphone1.png": require("../assets/img/headphone1.png"),
-  "headphone2.png": require("../assets/img/headphone2.png"),
-  // Thêm các ảnh khác nếu cần
-};
-
 // @ts-ignore
 const ProductGridScreen = ({ route, navigation }) => {
   const { categoryName } = route.params;
-  const { getCartItemCount } = useCart();
-  const itemCount = getCartItemCount();
+  const { loadCart } = useCart();
+  const [itemCount, setItemCount] = useState(0);
+
+  const refreshCartCount = useCallback(async () => {
+    try {
+      console.log("Refreshing cart count (Grid)...");
+      const cart = await loadCart();
+      setItemCount(cart.items.length);
+    } catch (e) {
+      console.error("Failed to refresh cart count (Grid)", e);
+    }
+  }, [loadCart]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshCartCount();
+    }, [refreshCartCount])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCartCount = async () => {
+        try {
+          const cart = await loadCart();
+          setItemCount(cart.items.length);
+        } catch (e) {
+          console.error("Failed to load cart count", e);
+          setItemCount(0);
+        }
+      };
+      fetchCartCount();
+    }, [loadCart])
+  );
 
   const [products, setProducts] = useState<FrontendProduct[]>([]);
   const [relevantProducts, setRelevantProducts] = useState<RelevantProduct[]>(
@@ -69,15 +92,12 @@ const ProductGridScreen = ({ route, navigation }) => {
     setLoading(true);
     setError("");
     try {
-      // ✅ dùng api.get thay vì fetch
       const data = await api.get(
         `/api/products/category/${categoryName.toLowerCase()}`
       );
       console.log(`Data for ${categoryName}:`, data);
 
       const mapped: FrontendProduct[] = data.map((item: any) => {
-        const localImg = LOCAL_IMAGE_MAP[item.imageURL];
-
         const detailScreenTarget =
           categoryName.toLowerCase() === "fashion" ||
           categoryName.toLowerCase() === "beauty"
@@ -89,11 +109,10 @@ const ProductGridScreen = ({ route, navigation }) => {
           name: item.name || "Unnamed Product",
           rating: item.rating || 0,
           price: item.price || 0,
-          image: localImg ?? { uri: `${API_BASE_URL}/images/${item.imageURL}` },
+          image: getLocalImage(item.imageURL, API_BASE_URL),
           detailScreen: detailScreenTarget,
         };
       });
-
       setProducts(mapped);
     } catch (err: any) {
       console.error("Error loading products:", err);
@@ -194,6 +213,7 @@ const ProductGridScreen = ({ route, navigation }) => {
                 name: item.name,
               })
             }
+            onCartUpdated={refreshCartCount}
           />
         )}
         keyExtractor={(item) => item.id}
@@ -217,8 +237,15 @@ const ProductGridScreen = ({ route, navigation }) => {
                 </View>
                 <FlatList
                   data={relevantProducts}
-                  // @ts-ignore
-                  renderItem={({ item }) => <ProductCard item={item} />}
+                  renderItem={({ item }) => (
+                    <ProductCard
+                      name={item.name}
+                      rating={item.rating || 0}
+                      price={item.price || 0}
+                      imageSource={item.image}
+                      // onPress={() => navigation.push('ProductDetailGeneral', { productId: item.id, name: item.name })} // Thêm onPress nếu cần
+                    />
+                  )}
                   keyExtractor={(item) => item.id}
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -271,7 +298,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cartBadge: {
-    // Thêm style badge
     position: "absolute",
     right: -8,
     top: -5,
@@ -283,7 +309,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cartBadgeText: {
-    // Thêm style badge text
     color: "white",
     fontSize: 10,
     fontWeight: "bold",

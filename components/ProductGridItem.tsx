@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ImageSourcePropType,
   Dimensions,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SIZES, globalStyles } from "../constants/styles";
@@ -24,13 +25,28 @@ interface ProductGridItemProps {
     image: ImageSourcePropType;
   };
   onPress?: () => void;
+  onCartUpdated?: () => void;
 }
 
-const ProductGridItem: React.FC<ProductGridItemProps> = ({ item, onPress }) => {
+const ProductGridItem: React.FC<ProductGridItemProps> = ({
+  item,
+  onPress,
+  onCartUpdated,
+}) => {
   const { addItem } = useCart();
 
-  const handleAddItem = () => {
-    addItem(item);
+  const handleAddItem = async () => {
+    try {
+      await addItem(Number(item.id), 1);
+      Alert.alert("Thành công", `${item.name} đã được thêm vào giỏ hàng.`);
+      onCartUpdated?.();
+    } catch (error: any) {
+      console.error("Failed to add item from ProductGridItem:", error);
+      Alert.alert(
+        "Lỗi",
+        error.message || "Không thể thêm sản phẩm vào giỏ hàng."
+      );
+    }
   };
 
   return (
@@ -55,12 +71,14 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ item, onPress }) => {
               key={i}
               name="star"
               size={12}
-              color={i <= item.rating ? COLORS.accent : COLORS.border}
+              color={
+                i <= Math.round(item.rating) ? COLORS.accent : COLORS.border
+              }
             />
           ))}
         </View>
         <View style={styles.priceContainer}>
-          <Text style={styles.priceText}>${item.price}</Text>
+          <Text style={styles.priceText}>${item.price.toFixed(2)}</Text>
           <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
             <Ionicons name="add" size={20} color={COLORS.primary} />
           </TouchableOpacity>
@@ -73,8 +91,14 @@ const ProductGridItem: React.FC<ProductGridItemProps> = ({ item, onPress }) => {
 const styles = StyleSheet.create({
   card: {
     width: cardWidth,
+    backgroundColor: COLORS.background,
     borderRadius: SIZES.radius,
     marginBottom: SIZES.padding,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   imageContainer: {
     backgroundColor: "#FAFAFA",
@@ -121,6 +145,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: COLORS.surface,
   },
 });
 

@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   ImageSourcePropType,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { COLORS, SIZES, globalStyles } from "../constants/styles";
@@ -20,13 +21,28 @@ interface ProductListItemProps {
     image: ImageSourcePropType;
   };
   onPress?: () => void;
+  onCartUpdated?: () => void;
 }
 
-const ProductListItem: React.FC<ProductListItemProps> = ({ item, onPress }) => {
+const ProductListItem: React.FC<ProductListItemProps> = ({
+  item,
+  onPress,
+  onCartUpdated,
+}) => {
   const { addItem } = useCart();
 
-  const handleAddItem = () => {
-    addItem(item);
+  const handleAddItem = async () => {
+    try {
+      await addItem(Number(item.id), 1);
+      Alert.alert("Thành công", `${item.name} đã được thêm vào giỏ hàng.`);
+      onCartUpdated?.();
+    } catch (error: any) {
+      console.error("Failed to add item from ProductListItem:", error);
+      Alert.alert(
+        "Lỗi",
+        error.message || "Không thể thêm sản phẩm vào giỏ hàng."
+      );
+    }
   };
 
   return (
@@ -42,20 +58,24 @@ const ProductListItem: React.FC<ProductListItemProps> = ({ item, onPress }) => {
         />
       </View>
       <View style={styles.details}>
-        <Text style={styles.productName}>{item.name}</Text>
+        <Text style={styles.productName} numberOfLines={1}>
+          {item.name}
+        </Text>
         <View style={styles.rating}>
           {[1, 2, 3, 4, 5].map((i) => (
             <Ionicons
               key={i}
               name="star"
               size={14}
-              color={i <= item.rating ? COLORS.accent : COLORS.border}
+              color={
+                i <= Math.round(item.rating) ? COLORS.accent : COLORS.border
+              }
             />
           ))}
         </View>
       </View>
       <View style={styles.priceContainer}>
-        <Text style={styles.priceText}>${item.price}</Text>
+        <Text style={styles.priceText}>${item.price.toFixed(2)}</Text>
         <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
           <Ionicons name="add" size={20} color={COLORS.primary} />
         </TouchableOpacity>
@@ -68,9 +88,15 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: COLORS.background,
     padding: SIZES.padding / 2,
     borderRadius: SIZES.radius,
     marginBottom: SIZES.padding,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   imageContainer: {
     width: 80,
@@ -103,7 +129,7 @@ const styles = StyleSheet.create({
     marginLeft: SIZES.padding,
   },
   priceText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "bold",
     color: COLORS.text,
     marginBottom: 10,
@@ -116,6 +142,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: COLORS.surface,
   },
 });
 
