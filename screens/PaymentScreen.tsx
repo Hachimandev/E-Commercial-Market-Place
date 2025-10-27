@@ -1,40 +1,66 @@
 // E-Commercial-Market-Place/screens/PaymentScreen.tsx
-
-import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { RadioButton } from "react-native-paper";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
-
-// Dữ liệu giả
-const paymentMethods = [
-  {
-    id: "1",
-    type: "card",
-    brand: "Visa",
-    last4: "2334",
-    icon: require("../assets/img/visa-logo.png"),
-  },
-  {
-    id: "2",
-    type: "card",
-    brand: "Mastercard",
-    last4: "3774",
-    icon: require("../assets/img/mastercard-logo.png"),
-  },
-  {
-    id: "3",
-    type: "paypal",
-    email: "abc@gmail.com",
-    icon: require("../assets/img/paypal-logo.png"),
-  },
-];
+import { api } from "../api/api";
+import { PaymentMethodAPI, PAYMENT_ICON_MAP } from "../types/cart";
 
 // @ts-ignore
 const PaymentScreen = ({ route, navigation }) => {
   const { totalAmount } = route.params;
-  const [selectedMethod, setSelectedMethod] = useState(paymentMethods[0].id);
+
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodAPI[]>([]);
+  const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
+
+  useEffect(() => {
+    const fetchMethods = async () => {
+      try {
+        setLoading(true);
+        const methods: PaymentMethodAPI[] = await api.get(
+          "/api/payment/methods"
+        );
+        setPaymentMethods(methods);
+        if (methods.length > 0) {
+          setSelectedMethod(methods[0].id);
+        }
+      } catch (error) {
+        console.error("Failed to fetch payment methods", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMethods();
+  }, []);
+
+  const handlePayNow = async () => {
+    if (!selectedMethod || paying) return;
+
+    setPaying(true);
+    try {
+      const orderData = await api.post("/api/orders/checkout", {
+        paymentMethodId: Number(selectedMethod),
+        voucherCode: null,
+      });
+
+      navigation.navigate("Success", { orderData: orderData });
+    } catch (error) {
+      console.error("Payment failed:", error);
+    } finally {
+      setPaying(false);
+    }
+  };
 
   return (
     <SafeAreaView style={globalStyles.safeArea}>
@@ -44,65 +70,81 @@ const PaymentScreen = ({ route, navigation }) => {
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Payment</Text>
-        <View style={{ width: 24 }} /> {/* Đệm */}
+        <View style={{ width: 24 }} />
       </View>
       {/* Total */}
       <View style={styles.totalContainer}>
         <Text style={styles.totalLabel}>TOTAL</Text>
         <Text style={styles.totalValue}>${totalAmount.toFixed(2)}</Text>
       </View>
-      {/* Payment Methods */}
-      <RadioButton.Group
-        onValueChange={(newValue) => setSelectedMethod(newValue)}
-        value={selectedMethod}
-      >
-        {paymentMethods.map((method) => (
-          <TouchableOpacity
-            key={method.id}
-            style={styles.methodBox}
-            onPress={() => setSelectedMethod(method.id)}
+      {loading ? (
+        <ActivityIndicator size="large" />
+      ) : (
+        <>
+          {/* Payment Methods*/}
+          <RadioButton.Group
+            onValueChange={(newValue) => setSelectedMethod(newValue)}
+            value={selectedMethod || ""}
           >
-            <Image
-              source={method.icon}
-              style={styles.methodIcon}
-              resizeMode="contain"
-            />
-            <Text style={styles.methodText}>
-              {method.type === "card" ? `****** ${method.last4}` : method.email}
-            </Text>
-            <RadioButton value={method.id} color={COLORS.primary} />
+            {paymentMethods.map((method) => (
+              <TouchableOpacity
+                key={method.id}
+                style={styles.methodBox}
+                onPress={() => setSelectedMethod(method.id)}
+              >
+                <Image
+                  source={
+                    PAYMENT_ICON_MAP[method.iconName] ||
+                    PAYMENT_ICON_MAP.default
+                  }
+                  style={styles.methodIcon}
+                  resizeMode="contain"
+                />
+                <Text style={styles.methodText}>
+                  {method.type === "card"
+                    ? `****** ${method.last4}`
+                    : method.email}
+                </Text>
+                <RadioButton value={method.id} color={COLORS.primary} />
+              </TouchableOpacity>
+            ))}
+          </RadioButton.Group>
+          {/* Add new card */}
+          <TouchableOpacity style={styles.addButton}>
+            <Ionicons name="add" size={22} color={COLORS.primary} />
+            <Text style={styles.addButtonText}>Add new card</Text>
           </TouchableOpacity>
-        ))}
-      </RadioButton.Group>
-      {/* Add new card */}
-      <TouchableOpacity style={styles.addButton}>
-        <Ionicons name="add" size={22} color={COLORS.primary} />
-        <Text style={styles.addButtonText}>Add new card</Text>
-      </TouchableOpacity>
-      <View style={{ flex: 1 }} /> {/* Đẩy nút Pay xuống dưới */}
+        </>
+      )}
+      <View style={{ flex: 1 }} />
       {/* Nút Pay now */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.payButton}
-          onPress={() =>
-            navigation.navigate("Success", {
-              totalAmount: totalAmount,
-              cardInfo: paymentMethods.find((m) => m.id === selectedMethod),
-            })
-          }
+          style={[
+            styles.payButton,
+            (paying || !selectedMethod) && { opacity: 0.7 },
+          ]}
+          onPress={handlePayNow}
+          disabled={paying || !selectedMethod}
         >
-          <Ionicons
-            name="shield-checkmark"
-            size={20}
-            color={COLORS.background}
-          />
-          <Text style={styles.payButtonText}>Pay now</Text>
+          {paying ? (
+            <ActivityIndicator color={COLORS.background} />
+          ) : (
+            <>
+              <Ionicons
+                name="shield-checkmark"
+                size={20}
+                color={COLORS.background}
+              />
+              <Text style={styles.payButtonText}>Pay now</Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
-
+// ... (Styles)
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
@@ -179,5 +221,4 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
 });
-
 export default PaymentScreen;

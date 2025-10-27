@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,6 +17,7 @@ import ProductCard from "../components/ProductCard";
 import SearchBar from "../components/SearchBar";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import { useCart } from "../context/CartContext";
+import { useFocusEffect } from "@react-navigation/native";
 
 const categories = [
   {
@@ -83,8 +84,25 @@ const recommendedProducts: RecommendedProduct[] = [
 
 // @ts-ignore
 const HomeScreen: React.FC = ({ navigation }) => {
-  const { getCartItemCount } = useCart(); // <-- 2. LẤY HÀM ĐẾM SỐ LƯỢNG
-  const itemCount = getCartItemCount();
+  const { loadCart } = useCart();
+
+  const [itemCount, setItemCount] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCartCount = async () => {
+        try {
+          const cart = await loadCart();
+          setItemCount(cart.items.length);
+        } catch (e) {
+          console.error("Failed to load cart count on HomeScreen", e);
+          setItemCount(0);
+        }
+      };
+      fetchCartCount();
+    }, [loadCart])
+  );
+
   const handleCategoryPress = (item: any) => {
     navigation.navigate(item.targetScreen, { categoryName: item.name });
   };
@@ -92,7 +110,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
   return (
     <SafeAreaView style={globalStyles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false} style={styles.container}>
-        {/* Header */}
+        {/* Header (Sử dụng itemCount từ state) */}
         <View style={globalStyles.header}>
           <Text style={globalStyles.headerTitle}>All Deals</Text>
           <View style={globalStyles.headerIconContainer}>
@@ -123,7 +141,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
         {/* Search Bar */}
         <SearchBar />
 
-        {/* Categories (Cập nhật onPress) */}
+        {/* Categories */}
         <FlatList
           data={categories}
           renderItem={({ item }) => (
@@ -157,6 +175,7 @@ const HomeScreen: React.FC = ({ navigation }) => {
           />
         </View>
 
+        {/* Small Banners */}
         <View style={styles.smallBannersContainer}>
           <View style={styles.smallBanner}>
             <Text style={styles.discountBadge}>30%</Text>
@@ -182,14 +201,16 @@ const HomeScreen: React.FC = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
+        {/* Recommended Products */}
         <FlatList
           data={recommendedProducts}
           renderItem={({ item }) => (
             <ProductCard
               name={item.name}
-              rating={item.rating}
-              price={item.price}
+              rating={item.rating || 0}
+              price={item.price || 0}
               imageSource={item.image}
+              // onPress={() => navigation.push('ProductDetailGeneral', { productId: item.id, name: item.name })}
             />
           )}
           keyExtractor={(item) => item.id}
@@ -198,12 +219,14 @@ const HomeScreen: React.FC = ({ navigation }) => {
           contentContainerStyle={styles.productList}
         />
 
+        {/* Đệm dưới cùng */}
         <View style={{ height: 50 }} />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
+// --- STYLES ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,

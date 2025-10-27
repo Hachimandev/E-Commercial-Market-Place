@@ -1,5 +1,3 @@
-// E-Commercial-Market-Place/components/ProductCard.tsx
-
 import React from "react";
 import {
   View,
@@ -10,13 +8,14 @@ import {
   ImageSourcePropType,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, SIZES, globalStyles } from "../constants/styles"; // Dùng style chung
+import { COLORS, SIZES, globalStyles } from "../constants/styles";
 
 interface ProductCardProps {
   imageSource: ImageSourcePropType;
   name: string;
   rating: number;
   price: number;
+  onPress?: () => void;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -24,9 +23,17 @@ const ProductCard: React.FC<ProductCardProps> = ({
   name,
   rating,
   price,
+  onPress,
 }) => {
+  const displayRating =
+    typeof rating === "number" && !isNaN(rating) ? rating.toFixed(1) : "N/A";
+
   return (
-    <TouchableOpacity style={[styles.card, globalStyles.shadow]}>
+    <TouchableOpacity
+      style={[styles.card, globalStyles.shadow]}
+      onPress={onPress}
+    >
+      {" "}
       <View style={styles.imageContainer}>
         <Image
           source={imageSource}
@@ -41,9 +48,12 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <View style={styles.ratingPrice}>
           <View style={styles.rating}>
             <Ionicons name="star" size={12} color={COLORS.accent} />
-            <Text style={styles.ratingText}>{rating.toFixed(1)}</Text>
+
+            <Text style={styles.ratingText}>{displayRating}</Text>
           </View>
-          <Text style={styles.priceText}>${price}</Text>
+          <Text style={styles.priceText}>
+            ${price ? price.toFixed(2) : "0.00"}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -56,6 +66,7 @@ const styles = StyleSheet.create({
     marginRight: 15,
     borderRadius: SIZES.radius,
     marginBottom: 10,
+    // Bỏ backgroundColor nếu globalStyles.shadow đã có
   },
   imageContainer: {
     alignItems: "center",
@@ -64,10 +75,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FAFAFA",
     borderTopLeftRadius: SIZES.radius,
     borderTopRightRadius: SIZES.radius,
+    height: 120,
   },
   productImage: {
-    width: "90%",
-    height: 120,
+    width: "80%",
+    height: "80%",
     alignSelf: "center",
   },
   details: {

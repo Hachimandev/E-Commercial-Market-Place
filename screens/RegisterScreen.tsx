@@ -8,276 +8,302 @@ import {
   ScrollView,
   TouchableOpacity,
 } from "react-native";
-import {
-  TextInput,
-  Button,
-  Text,
-  Card,
-  ActivityIndicator,
-} from "react-native-paper";
+import { TextInput, Button, Text, Card } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons, AntDesign, FontAwesome } from "@expo/vector-icons";
-import { COLORS, SIZES } from "../constants/styles";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function RegisterScreen({ navigation }: any) {
+const COLORS = {
+  primary: "#0078D7",
+  textDark: "#1E293B",
+  textLight: "#64748B",
+  background: "#FFFFFF",
+  border: "#CBD5E1",
+};
+
+const SIZES = {
+  radius: 10,
+  padding: 16,
+};
+
+const RegisterScreen = ({ navigation }: any) => {
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
-    if (!username || !password || !confirm || !fullName || !phone || !address) {
-      Alert.alert("⚠️ Lỗi", "Vui lòng nhập đầy đủ thông tin!");
+    if (!username || !fullName || !phone || !address || !password || !confirm) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin!");
       return;
     }
-
     if (password !== confirm) {
-      Alert.alert("❌ Lỗi", "Mật khẩu xác nhận không khớp!");
+      Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp!");
       return;
     }
 
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
-
-    Alert.alert("🎉 Thành công", "Tài khoản đã được tạo, vui lòng đăng nhập.");
+    Alert.alert("Thành công", "Đăng ký thành công!");
     navigation.goBack();
-  };
-
-  const handleSocialRegister = (provider: string) => {
-    Alert.alert(
-      "Thông báo",
-      `Chức năng đăng ký bằng ${provider} sẽ sớm được cập nhật!`
-    );
   };
 
   return (
     <LinearGradient
-      colors={["#E0F7FA", "#B2EBF2", "#80DEEA"]}
+      colors={["#E3F2FD", "#BBDEFB", "#90CAF9"]}
       style={styles.gradientContainer}
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <Ionicons name="arrow-back" size={24} color="#333" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Đăng ký tài khoản</Text>
-          <View style={{ width: 40 }} />
-        </View>
-
         <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View>
-            <Text style={styles.title}>Chào mừng bạn! 👋</Text>
-            <Text style={styles.subtitle}>
-              Tạo tài khoản để bắt đầu mua sắm cùng MarketPlaceX
-            </Text>
-
-            <Card style={styles.card}>
-              <Card.Content>
-                <TextInput
-                  label="Tên đăng nhập"
-                  mode="outlined"
-                  value={username}
-                  onChangeText={setUsername}
-                  style={styles.input}
-                  left={<TextInput.Icon icon="account-outline" />}
-                  disabled={loading}
-                />
-                <TextInput
-                  label="Họ và tên"
-                  mode="outlined"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  style={styles.input}
-                  left={<TextInput.Icon icon="account-details-outline" />}
-                  disabled={loading}
-                />
-                <TextInput
-                  label="Số điện thoại"
-                  mode="outlined"
-                  value={phone}
-                  onChangeText={setPhone}
-                  style={styles.input}
-                  left={<TextInput.Icon icon="phone-outline" />}
-                  keyboardType="phone-pad"
-                  disabled={loading}
-                />
-                <TextInput
-                  label="Địa chỉ"
-                  mode="outlined"
-                  value={address}
-                  onChangeText={setAddress}
-                  style={styles.input}
-                  left={<TextInput.Icon icon="map-marker-outline" />}
-                  disabled={loading}
-                />
-                <TextInput
-                  label="Mật khẩu"
-                  mode="outlined"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  style={styles.input}
-                  left={<TextInput.Icon icon="lock-outline" />}
-                  disabled={loading}
-                />
-                <TextInput
-                  label="Xác nhận mật khẩu"
-                  mode="outlined"
-                  value={confirm}
-                  onChangeText={setConfirm}
-                  secureTextEntry
-                  style={styles.input}
-                  left={<TextInput.Icon icon="lock-check-outline" />}
-                  disabled={loading}
-                />
-
-                <Button
-                  mode="contained"
-                  onPress={handleRegister}
-                  style={styles.button}
-                  buttonColor={COLORS.primary}
-                  loading={loading}
-                  disabled={loading}
-                  labelStyle={{ fontWeight: "bold", fontSize: 16 }}
-                >
-                  {loading ? "Đang tạo..." : "Đăng ký ngay"}
-                </Button>
-
-                <Text style={styles.orText}>— Hoặc đăng ký bằng —</Text>
-
-                <View style={styles.socialButtonContainer}>
-                  <Button
-                    mode="outlined"
-                    onPress={() => handleSocialRegister("Google")}
-                    style={styles.socialButton}
-                    icon={() => (
-                      <AntDesign name="google" size={20} color="#DB4437" />
-                    )}
-                    textColor="#DB4437"
-                  >
-                    Google
-                  </Button>
-
-                  <Button
-                    mode="outlined"
-                    onPress={() => handleSocialRegister("Facebook")}
-                    style={styles.socialButton}
-                    icon={() => (
-                      <FontAwesome
-                        name="facebook-square"
-                        size={20}
-                        color="#4267B2"
-                      />
-                    )}
-                    textColor="#4267B2"
-                  >
-                    Facebook
-                  </Button>
-                </View>
-              </Card.Content>
-            </Card>
-
-            <View style={styles.footer}>
-              <Text style={{ color: COLORS.textLight }}>Đã có tài khoản?</Text>
-              <Button
-                mode="text"
-                onPress={() => navigation.goBack()}
-                textColor={COLORS.primary}
-              >
-                Đăng nhập ngay
-              </Button>
-            </View>
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <Ionicons name="arrow-back" size={24} color={COLORS.textDark} />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Đăng ký tài khoản</Text>
+            <View style={{ width: 30 }} />
           </View>
+
+          <Card style={styles.card}>
+            <Card.Content>
+              <Text style={styles.title}>Chào mừng bạn!</Text>
+              <Text style={styles.subtitle}>
+                Vui lòng điền thông tin để tạo tài khoản
+              </Text>
+
+              <TextInput
+                label={<Text style={styles.labelText}>Tên đăng nhập</Text>}
+                value={username}
+                onChangeText={setUsername}
+                mode="outlined"
+                left={<TextInput.Icon icon="account-outline" />}
+                style={styles.input}
+                contentStyle={styles.inputText}
+                theme={{
+                  colors: {
+                    primary: COLORS.primary,
+                    outline: COLORS.border,
+                    onSurfaceVariant: COLORS.textDark,
+                  },
+                }}
+              />
+
+              <TextInput
+                label={<Text style={styles.labelText}>Họ và tên</Text>}
+                value={fullName}
+                onChangeText={setFullName}
+                mode="outlined"
+                left={<TextInput.Icon icon="account-details-outline" />}
+                style={styles.input}
+                contentStyle={styles.inputText}
+                theme={{
+                  colors: {
+                    primary: COLORS.primary,
+                    outline: COLORS.border,
+                    onSurfaceVariant: COLORS.textDark,
+                  },
+                }}
+              />
+
+              <TextInput
+                label={<Text style={styles.labelText}>Số điện thoại</Text>}
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                mode="outlined"
+                left={<TextInput.Icon icon="phone-outline" />}
+                style={styles.input}
+                contentStyle={styles.inputText}
+                theme={{
+                  colors: {
+                    primary: COLORS.primary,
+                    outline: COLORS.border,
+                    onSurfaceVariant: COLORS.textDark,
+                  },
+                }}
+              />
+
+              <TextInput
+                label={<Text style={styles.labelText}>Địa chỉ</Text>}
+                value={address}
+                onChangeText={setAddress}
+                mode="outlined"
+                left={<TextInput.Icon icon="map-marker-outline" />}
+                style={styles.input}
+                contentStyle={styles.inputText}
+                theme={{
+                  colors: {
+                    primary: COLORS.primary,
+                    outline: COLORS.border,
+                    onSurfaceVariant: COLORS.textDark,
+                  },
+                }}
+              />
+
+              <TextInput
+                label={<Text style={styles.labelText}>Mật khẩu</Text>}
+                value={password}
+                onChangeText={setPassword}
+                mode="outlined"
+                secureTextEntry={!showPassword}
+                left={<TextInput.Icon icon="lock-outline" />}
+                right={
+                  <TextInput.Icon
+                    icon={showPassword ? "eye-off-outline" : "eye-outline"}
+                    onPress={() => setShowPassword(!showPassword)}
+                  />
+                }
+                style={styles.input}
+                contentStyle={styles.inputText}
+                theme={{
+                  colors: {
+                    primary: COLORS.primary,
+                    outline: COLORS.border,
+                    onSurfaceVariant: COLORS.textDark,
+                  },
+                }}
+              />
+
+              <TextInput
+                label={<Text style={styles.labelText}>Xác nhận mật khẩu</Text>}
+                value={confirm}
+                onChangeText={setConfirm}
+                mode="outlined"
+                secureTextEntry={!showConfirm}
+                left={<TextInput.Icon icon="lock-check-outline" />}
+                right={
+                  <TextInput.Icon
+                    icon={showConfirm ? "eye-off-outline" : "eye-outline"}
+                    onPress={() => setShowConfirm(!showConfirm)}
+                  />
+                }
+                style={styles.input}
+                contentStyle={styles.inputText}
+                theme={{
+                  colors: {
+                    primary: COLORS.primary,
+                    outline: COLORS.border,
+                    onSurfaceVariant: COLORS.textDark,
+                  },
+                }}
+              />
+
+              <Button
+                mode="contained"
+                onPress={handleRegister}
+                style={styles.button}
+                buttonColor={COLORS.primary}
+                loading={loading}
+                labelStyle={styles.buttonText}
+              >
+                {loading ? "Đang tạo..." : "Đăng ký ngay"}
+              </Button>
+
+              <View style={styles.footer}>
+                <Text style={styles.footerText}>Đã có tài khoản?</Text>
+                <Button
+                  mode="text"
+                  onPress={() => navigation.goBack()}
+                  textColor={COLORS.primary}
+                  labelStyle={{ fontWeight: "600" }}
+                >
+                  Đăng nhập ngay
+                </Button>
+              </View>
+            </Card.Content>
+          </Card>
         </ScrollView>
       </KeyboardAvoidingView>
     </LinearGradient>
   );
-}
+};
 
 const styles = StyleSheet.create({
   gradientContainer: {
     flex: 1,
   },
+  scrollContainer: {
+    flexGrow: 1,
+    padding: 20,
+    justifyContent: "center",
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: Platform.OS === "ios" ? 50 : 35,
-    paddingHorizontal: 15,
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
   backButton: {
-    padding: 6,
+    padding: 5,
   },
   headerTitle: {
     flex: 1,
     textAlign: "center",
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 20,
+    color: COLORS.textDark,
   },
   card: {
     backgroundColor: COLORS.background,
     borderRadius: 16,
-    elevation: 5,
-    marginTop: 10,
+    elevation: 4,
+    paddingVertical: 10,
   },
   title: {
-    fontSize: 26,
-    fontWeight: "bold",
     textAlign: "center",
+    fontSize: 22,
+    fontWeight: "bold",
     color: COLORS.primary,
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 15,
     textAlign: "center",
+    fontSize: 15,
     color: COLORS.textLight,
     marginBottom: 20,
   },
+  labelText: {
+    color: COLORS.textDark,
+    fontWeight: "600",
+    fontSize: 15,
+  },
   input: {
-    marginBottom: 14,
+    marginBottom: 15,
     backgroundColor: COLORS.background,
+    borderRadius: 10,
+  },
+  inputText: {
+    fontSize: 16,
+    color: COLORS.textDark,
   },
   button: {
-    marginTop: 12,
-    borderRadius: 12,
-    paddingVertical: 10,
+    borderRadius: 10,
+    paddingVertical: 8,
+    marginTop: 10,
   },
-  orText: {
-    textAlign: "center",
-    color: COLORS.textLight,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  socialButtonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  socialButton: {
-    flex: 1,
-    marginHorizontal: 5,
-    borderRadius: 12,
-    borderColor: COLORS.border,
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "bold",
   },
   footer: {
     flexDirection: "row",
     justifyContent: "center",
-    alignItems: "center",
-    marginTop: 18,
+    marginTop: 15,
+  },
+  footerText: {
+    color: COLORS.textLight,
+    fontSize: 15,
   },
 });
+
+export default RegisterScreen;

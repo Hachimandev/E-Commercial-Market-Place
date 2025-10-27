@@ -34,6 +34,7 @@ const LoginScreen = () => {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // 👁️ thêm state này
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -112,8 +113,14 @@ const LoginScreen = () => {
                 value={password}
                 onChangeText={setPassword}
                 mode="outlined"
-                secureTextEntry
+                secureTextEntry={!showPassword}
                 left={<TextInput.Icon icon="lock-outline" />}
+                right={
+                  <TextInput.Icon
+                    icon={showPassword ? "eye-off-outline" : "eye-outline"}
+                    onPress={() => setShowPassword(!showPassword)}
+                  />
+                }
                 style={styles.input}
                 contentStyle={styles.inputText}
                 theme={{

@@ -1,94 +1,114 @@
-// E-Commercial-Market-Place/screens/SuccessScreen.tsx
-
-import React, { useEffect } from "react"; // <-- 1. IMPORT USEEFFECT
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
-import { useCart } from "../context/CartContext"; // <-- 2. IMPORT USECART
+import { OrderSuccessAPI, PAYMENT_ICON_MAP } from "../types/cart";
+import { getLocalImage } from "../constants/imageMap";
+import { API_BASE_URL } from "../api/api";
 
 // @ts-ignore
 const SuccessScreen = ({ route, navigation }) => {
-  const { totalAmount, cardInfo } = route.params;
-  const { clearCart } = useCart(); // <-- 3. LẤY HÀM CLEARCART
-
-  const subtotal = totalAmount / 1.1;
-  const tax = totalAmount - subtotal;
-
-  // 4. SỬ DỤNG USEEFFECT ĐỂ XÓA GIỎ HÀNG
-  useEffect(() => {
-    // Xóa giỏ hàng ngay khi vào màn hình thành công
-    clearCart();
-  }, []); // Mảng rỗng đảm bảo nó chỉ chạy 1 lần khi mount
+  const { orderData }: { orderData: OrderSuccessAPI } = route.params;
 
   const handleBackToHome = () => {
-    // Điều hướng về Home (đóng modal stack)
-    // Cập nhật: navigation.navigate('MainTabs') có thể không đóng modal
-    // Cách chuẩn hơn là navigation.popToTop() rồi goBack()
-    // Hoặc đơn giản là reset về Home
     navigation.navigate("MainTabs", { screen: "HomeTab" });
   };
 
   return (
     <SafeAreaView style={[globalStyles.safeArea, styles.container]}>
-      {/* Success Icon */}
-      <View style={styles.iconContainer}>
-        <Ionicons name="checkmark-circle" size={100} color="green" />
-      </View>
+      <ScrollView>
+        {/* Success Icon */}
+        <View style={styles.iconContainer}>
+          <Ionicons name="checkmark-circle" size={100} color="green" />
+        </View>
 
-      {/* Message */}
-      <Text style={styles.title}>Order placed successfully!</Text>
-      <Text style={styles.subtitle}>
-        Commodi eu ut sunt qui minim fugiat elit nisi enim
-      </Text>
+        {/* Message */}
+        <Text style={styles.title}>Order placed successfully!</Text>
+        <Text style={styles.subtitle}>
+          Your order ID is: #{orderData.orderId}
+        </Text>
 
-      {/* Summary Box */}
-      <View style={styles.summaryBox}>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Subtotal</Text>
-          <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Tax (10%)</Text>
-          <Text style={styles.summaryValue}>${tax.toFixed(2)}</Text>
-        </View>
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Fees</Text>
-          <Text style={styles.summaryValue}>$0</Text>
-        </View>
-        <View style={styles.separator} />
-        <View style={styles.summaryRow}>
-          <Text style={styles.summaryLabel}>Card</Text>
-          <View style={styles.cardInfo}>
+        {/* Danh sách sản phẩm đã mua */}
+        <Text style={styles.listTitle}>Items Purchased</Text>
+        {orderData.itemsPurchased.map((item) => (
+          <View key={item.id} style={styles.itemRow}>
             <Image
-              source={cardInfo.icon}
-              style={styles.cardIcon}
-              resizeMode="contain"
+              source={getLocalImage(item.imageURL, API_BASE_URL)}
+              style={styles.itemImage}
             />
-            <Text style={styles.summaryValue}>****** {cardInfo.last4}</Text>
+            <View style={styles.itemInfo}>
+              <Text style={styles.itemName} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <Text style={styles.itemQty}>Qty: {item.quantity}</Text>
+            </View>
+            <Text style={styles.itemPrice}>${item.subtotal.toFixed(2)}</Text>
+          </View>
+        ))}
+
+        {/* Summary Box  */}
+        <View style={styles.summaryBox}>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Subtotal</Text>
+            <Text style={styles.summaryValue}>
+              ${orderData.subtotal.toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Tax</Text>
+            <Text style={styles.summaryValue}>${orderData.tax.toFixed(2)}</Text>
+          </View>
+          <View style={styles.separator} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>Card</Text>
+            <View style={styles.cardInfo}>
+              <Image
+                source={
+                  PAYMENT_ICON_MAP[orderData.paymentMethod.iconName] ||
+                  PAYMENT_ICON_MAP.default
+                }
+                style={styles.cardIcon}
+                resizeMode="contain"
+              />
+              <Text style={styles.summaryValue}>
+                {orderData.paymentMethod.type === "card"
+                  ? `****** ${orderData.paymentMethod.last4}`
+                  : orderData.paymentMethod.email}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.separator} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.totalLabel}>Total</Text>
+            <View style={{ alignItems: "flex-end" }}>
+              <Text style={styles.totalValue}>
+                ${orderData.totalAmount.toFixed(2)}
+              </Text>
+              <Text style={styles.statusText}>{orderData.status}</Text>
+            </View>
           </View>
         </View>
-        <View style={styles.separator} />
-        <View style={styles.summaryRow}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={styles.totalValue}>${totalAmount.toFixed(2)}</Text>
-            <Text style={styles.statusText}>Success</Text>
+
+        {/* Rating */}
+        <View style={{ alignItems: "center" }}>
+          <Text style={styles.ratingTitle}>How was your experience?</Text>
+          <View style={styles.starsContainer}>
+            <Ionicons name="star" size={30} color={COLORS.accent} />
+            <Ionicons name="star" size={30} color={COLORS.accent} />
+            <Ionicons name="star" size={30} color={COLORS.accent} />
+            <Ionicons name="star" size={30} color={COLORS.accent} />
+            <Ionicons name="star-outline" size={30} color={COLORS.accent} />
           </View>
         </View>
-      </View>
-
-      {/* Rating */}
-      <Text style={styles.ratingTitle}>How was your experience?</Text>
-      <View style={styles.starsContainer}>
-        <Ionicons name="star" size={30} color={COLORS.accent} />
-        <Ionicons name="star" size={30} color={COLORS.accent} />
-        <Ionicons name="star" size={30} color={COLORS.accent} />
-        <Ionicons name="star" size={30} color={COLORS.accent} />
-        <Ionicons name="star-outline" size={30} color={COLORS.accent} />
-      </View>
-
-      <View style={{ flex: 1 }} />
+      </ScrollView>
 
       {/* Back to Home Button */}
       <View style={styles.footer}>
@@ -101,21 +121,21 @@ const SuccessScreen = ({ route, navigation }) => {
   );
 };
 
-// ... (Styles giữ nguyên)
+// ... (Styles)
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: "center",
-    padding: SIZES.padding,
   },
   iconContainer: {
-    marginTop: 50,
+    marginTop: 30,
+    alignItems: "center",
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     color: COLORS.primary,
     marginTop: 20,
+    textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
@@ -123,13 +143,51 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
     maxWidth: "80%",
+    alignSelf: "center",
+  },
+  listTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: COLORS.text,
+    marginTop: 20,
+    marginBottom: 10,
+    paddingHorizontal: SIZES.padding,
+  },
+  itemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: SIZES.padding,
+    marginBottom: 10,
+  },
+  itemImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 5,
+    backgroundColor: COLORS.surface,
+    marginRight: 10,
+  },
+  itemInfo: {
+    flex: 1,
+  },
+  itemName: {
+    fontSize: 14,
+    color: COLORS.text,
+  },
+  itemQty: {
+    fontSize: 12,
+    color: COLORS.textLight,
+  },
+  itemPrice: {
+    fontSize: 14,
+    fontWeight: "bold",
   },
   summaryBox: {
-    width: "100%",
+    width: "90%",
+    alignSelf: "center",
     backgroundColor: COLORS.surface,
     borderRadius: SIZES.radius,
     padding: SIZES.padding,
-    marginTop: 30,
+    marginTop: 20,
   },
   summaryRow: {
     flexDirection: "row",
@@ -179,13 +237,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textLight,
     marginTop: 30,
+    textAlign: "center",
   },
   starsContainer: {
     flexDirection: "row",
     marginTop: 10,
+    justifyContent: "center",
   },
   footer: {
-    width: "100%",
+    padding: SIZES.padding,
+    borderTopWidth: 1,
+    borderColor: COLORS.border,
   },
   homeButton: {
     backgroundColor: COLORS.primary,

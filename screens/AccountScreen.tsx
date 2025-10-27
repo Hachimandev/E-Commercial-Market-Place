@@ -25,7 +25,7 @@ const AccountScreen = () => {
   const { colors } = useTheme();
   const { user, logout } = useAuth();
 
-  const [name, setName] = useState(user?.name || "");
+  const [name, setName] = useState(user?.fullName || "");
   const [phone, setPhone] = useState(user?.phone || "");
   const [address, setAddress] = useState(user?.address || "");
 
@@ -59,7 +59,7 @@ const AccountScreen = () => {
           />
         </TouchableOpacity>
 
-        <Text style={styles.username}>{user?.name || "Guest User"}</Text>
+        <Text style={styles.username}>{user?.fullName || "Guest User"}</Text>
         <Text style={styles.role}>👑 {user?.role || "Customer"}</Text>
       </LinearGradient>
 

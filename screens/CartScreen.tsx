@@ -1,6 +1,4 @@
-// E-Commercial-Market-Place/screens/CartScreen.tsx
-
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,20 +6,66 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import { useCart } from "../context/CartContext";
+import { CartAPI } from "../types/cart";
 import CartItemRow from "../components/CartItem";
+import { useFocusEffect } from "@react-navigation/native";
 
 // @ts-ignore
 const CartScreen = ({ navigation }) => {
-  const { state, getCartTotal } = useCart();
+  const { loadCart } = useCart();
+  const [cart, setCart] = useState<CartAPI | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [voucher, setVoucher] = useState("");
 
-  const total = getCartTotal();
-  // Giả sử voucher giảm 10%
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCart = async () => {
+        setLoading(true);
+        setError("");
+        try {
+          const cartData = await loadCart();
+          setCart(cartData);
+        } catch (err: any) {
+          setError(err.message || "Failed to load cart.");
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchCart();
+    }, [loadCart])
+  );
+
+  const onCartUpdate = (updatedCart: CartAPI) => {
+    setCart(updatedCart);
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={globalStyles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Checkout</Text>
+          <View style={{ width: 24 }} />
+        </View>
+        <ActivityIndicator
+          size="large"
+          color={COLORS.primary}
+          style={{ flex: 1 }}
+        />
+      </SafeAreaView>
+    );
+  }
+
+  const total = cart?.totalPrice || 0;
   const voucherDiscount = voucher === "SALE10" ? total * 0.1 : 0;
   const finalTotal = total - voucherDiscount;
 
@@ -36,67 +80,57 @@ const CartScreen = ({ navigation }) => {
         <View style={{ width: 24 }} /> {/* Đệm */}
       </View>
 
-      <FlatList
-        data={state.items}
-        renderItem={({ item }) => <CartItemRow item={item} />}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Your cart is empty.</Text>
-          </View>
-        }
-        contentContainerStyle={styles.listContainer}
-        ListFooterComponent={
-          <>
-            {/* Voucher */}
-            <View style={styles.voucherContainer}>
-              <Text style={styles.sectionTitle}>Voucher</Text>
-              <View style={styles.voucherInputRow}>
-                <TextInput
-                  style={styles.voucherInput}
-                  placeholder="Enter voucher code"
-                  value={voucher}
-                  onChangeText={setVoucher}
-                />
-                <TouchableOpacity style={styles.applyButton}>
-                  <Text style={styles.applyButtonText}>Apply</Text>
-                </TouchableOpacity>
-              </View>
+      {error ? (
+        <View style={styles.emptyContainer}>
+          <Text style={{ color: "red" }}>{error}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={cart?.items || []}
+          renderItem={({ item }) => (
+            <CartItemRow item={item} onCartUpdate={onCartUpdate} />
+          )}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Your cart is empty.</Text>
             </View>
-
-            {/* Total */}
-            <View style={styles.totalContainer}>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Subtotal</Text>
-                <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
-              </View>
-              {voucherDiscount > 0 && (
+          }
+          contentContainerStyle={styles.listContainer}
+          ListFooterComponent={
+            <>
+              {/* Total */}
+              <View style={styles.totalContainer}>
                 <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Voucher (SALE10)</Text>
-                  <Text style={[styles.totalValue, { color: "green" }]}>
-                    -${voucherDiscount.toFixed(2)}
+                  <Text style={styles.totalLabel}>Subtotal</Text>
+                  <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+                </View>
+                {/* ... (phần voucher) ... */}
+                <View style={[styles.totalRow, styles.finalTotalRow]}>
+                  <Text style={styles.finalTotalLabel}>TOTAL</Text>
+                  <Text style={styles.finalTotalValue}>
+                    ${finalTotal.toFixed(2)}
                   </Text>
                 </View>
-              )}
-              <View style={[styles.totalRow, styles.finalTotalRow]}>
-                <Text style={styles.finalTotalLabel}>TOTAL</Text>
-                <Text style={styles.finalTotalValue}>
-                  ${finalTotal.toFixed(2)}
-                </Text>
               </View>
-            </View>
-          </>
-        }
-      />
+            </>
+          }
+        />
+      )}
 
       {/* Nút Next */}
       <View style={styles.footer}>
         <TouchableOpacity
-          style={styles.nextButton}
+          style={[
+            styles.nextButton,
+            (!cart || cart.items.length === 0) && {
+              backgroundColor: COLORS.border,
+            },
+          ]}
           onPress={() =>
             navigation.navigate("Payment", { totalAmount: finalTotal })
           }
-          disabled={state.items.length === 0}
+          disabled={!cart || cart.items.length === 0}
         >
           <Text style={styles.nextButtonText}>Next</Text>
           <Ionicons name="arrow-forward" size={20} color={COLORS.background} />
@@ -106,6 +140,7 @@ const CartScreen = ({ navigation }) => {
   );
 };
 
+// ... (Styles)
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
@@ -213,5 +248,4 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 });
-
 export default CartScreen;
