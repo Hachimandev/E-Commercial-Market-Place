@@ -11,6 +11,8 @@ import {
 import { TextInput, Button, Text, Card } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
+import { api } from "../api/api";
+import { CommonActions } from "@react-navigation/native";
 
 const COLORS = {
   primary: "#0078D7",
@@ -18,11 +20,6 @@ const COLORS = {
   textLight: "#64748B",
   background: "#FFFFFF",
   border: "#CBD5E1",
-};
-
-const SIZES = {
-  radius: 10,
-  padding: 16,
 };
 
 const RegisterScreen = ({ navigation }: any) => {
@@ -47,12 +44,40 @@ const RegisterScreen = ({ navigation }: any) => {
     }
 
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 800));
-    setLoading(false);
-    Alert.alert("Thành công", "Đăng ký thành công!");
-    navigation.goBack();
-  };
+    try {
+      const res = await api.post("/api/auth/register", {
+        name: username,
+        fullName,
+        password,
+        phone,
+        address,
+      });
 
+      // Nếu đăng ký thành công, backend trả 200 và buyer object
+      Alert.alert("Thành công", "Đăng ký thành công!", [
+        {
+          text: "OK",
+          onPress: () => {
+            setUsername("");
+            setFullName("");
+            setPhone("");
+            setAddress("");
+            setPassword("");
+            setConfirm("");
+            navigation.getParent()?.navigate("LoginScreen");
+          },
+        },
+      ]);
+    } catch (error: any) {
+      const msg =
+        error.response?.data?.error ||
+        "Không thể đăng ký. Vui lòng thử lại sau!";
+      Alert.alert("Lỗi", msg);
+      console.log("Register error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <LinearGradient
       colors={["#E3F2FD", "#BBDEFB", "#90CAF9"]}
@@ -82,80 +107,48 @@ const RegisterScreen = ({ navigation }: any) => {
               </Text>
 
               <TextInput
-                label={<Text style={styles.labelText}>Tên đăng nhập</Text>}
+                label="Tên đăng nhập"
                 value={username}
                 onChangeText={setUsername}
                 mode="outlined"
                 left={<TextInput.Icon icon="account-outline" />}
                 style={styles.input}
-                contentStyle={styles.inputText}
-                theme={{
-                  colors: {
-                    primary: COLORS.primary,
-                    outline: COLORS.border,
-                    onSurfaceVariant: COLORS.textDark,
-                  },
-                }}
               />
 
               <TextInput
-                label={<Text style={styles.labelText}>Họ và tên</Text>}
+                label="Họ và tên"
                 value={fullName}
                 onChangeText={setFullName}
                 mode="outlined"
                 left={<TextInput.Icon icon="account-details-outline" />}
                 style={styles.input}
-                contentStyle={styles.inputText}
-                theme={{
-                  colors: {
-                    primary: COLORS.primary,
-                    outline: COLORS.border,
-                    onSurfaceVariant: COLORS.textDark,
-                  },
-                }}
               />
 
               <TextInput
-                label={<Text style={styles.labelText}>Số điện thoại</Text>}
+                label="Số điện thoại"
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
                 mode="outlined"
                 left={<TextInput.Icon icon="phone-outline" />}
                 style={styles.input}
-                contentStyle={styles.inputText}
-                theme={{
-                  colors: {
-                    primary: COLORS.primary,
-                    outline: COLORS.border,
-                    onSurfaceVariant: COLORS.textDark,
-                  },
-                }}
               />
 
               <TextInput
-                label={<Text style={styles.labelText}>Địa chỉ</Text>}
+                label="Địa chỉ"
                 value={address}
                 onChangeText={setAddress}
                 mode="outlined"
                 left={<TextInput.Icon icon="map-marker-outline" />}
                 style={styles.input}
-                contentStyle={styles.inputText}
-                theme={{
-                  colors: {
-                    primary: COLORS.primary,
-                    outline: COLORS.border,
-                    onSurfaceVariant: COLORS.textDark,
-                  },
-                }}
               />
 
               <TextInput
-                label={<Text style={styles.labelText}>Mật khẩu</Text>}
+                label="Mật khẩu"
                 value={password}
                 onChangeText={setPassword}
-                mode="outlined"
                 secureTextEntry={!showPassword}
+                mode="outlined"
                 left={<TextInput.Icon icon="lock-outline" />}
                 right={
                   <TextInput.Icon
@@ -164,22 +157,14 @@ const RegisterScreen = ({ navigation }: any) => {
                   />
                 }
                 style={styles.input}
-                contentStyle={styles.inputText}
-                theme={{
-                  colors: {
-                    primary: COLORS.primary,
-                    outline: COLORS.border,
-                    onSurfaceVariant: COLORS.textDark,
-                  },
-                }}
               />
 
               <TextInput
-                label={<Text style={styles.labelText}>Xác nhận mật khẩu</Text>}
+                label="Xác nhận mật khẩu"
                 value={confirm}
                 onChangeText={setConfirm}
-                mode="outlined"
                 secureTextEntry={!showConfirm}
+                mode="outlined"
                 left={<TextInput.Icon icon="lock-check-outline" />}
                 right={
                   <TextInput.Icon
@@ -188,25 +173,16 @@ const RegisterScreen = ({ navigation }: any) => {
                   />
                 }
                 style={styles.input}
-                contentStyle={styles.inputText}
-                theme={{
-                  colors: {
-                    primary: COLORS.primary,
-                    outline: COLORS.border,
-                    onSurfaceVariant: COLORS.textDark,
-                  },
-                }}
               />
 
               <Button
                 mode="contained"
                 onPress={handleRegister}
                 style={styles.button}
-                buttonColor={COLORS.primary}
                 loading={loading}
-                labelStyle={styles.buttonText}
+                disabled={loading}
               >
-                {loading ? "Đang tạo..." : "Đăng ký ngay"}
+                {loading ? "Đang đăng ký..." : "Đăng ký ngay"}
               </Button>
 
               <View style={styles.footer}>
@@ -215,7 +191,6 @@ const RegisterScreen = ({ navigation }: any) => {
                   mode="text"
                   onPress={() => navigation.goBack()}
                   textColor={COLORS.primary}
-                  labelStyle={{ fontWeight: "600" }}
                 >
                   Đăng nhập ngay
                 </Button>
@@ -229,9 +204,7 @@ const RegisterScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  gradientContainer: {
-    flex: 1,
-  },
+  gradientContainer: { flex: 1 },
   scrollContainer: {
     flexGrow: 1,
     padding: 20,
@@ -243,9 +216,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 20,
   },
-  backButton: {
-    padding: 5,
-  },
+  backButton: { padding: 5 },
   headerTitle: {
     flex: 1,
     textAlign: "center",
@@ -272,28 +243,14 @@ const styles = StyleSheet.create({
     color: COLORS.textLight,
     marginBottom: 20,
   },
-  labelText: {
-    color: COLORS.textDark,
-    fontWeight: "600",
-    fontSize: 15,
-  },
   input: {
     marginBottom: 15,
     backgroundColor: COLORS.background,
-    borderRadius: 10,
-  },
-  inputText: {
-    fontSize: 16,
-    color: COLORS.textDark,
   },
   button: {
     borderRadius: 10,
     paddingVertical: 8,
     marginTop: 10,
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: "bold",
   },
   footer: {
     flexDirection: "row",
