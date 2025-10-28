@@ -1,96 +1,134 @@
-// E-Commercial-Market-Place/screens/admin/OrderManagementScreen.tsx
-
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import { SegmentedButtons } from "react-native-paper";
 import { globalStyles, COLORS, SIZES } from "../../constants/styles";
+import SearchBar from "../../components/SearchBar";
+import { api } from "../../api/api";
 
-// Mock Data
-type OrderStatus = "Pending" | "Shipping" | "Completed" | "Canceled";
-const mockOrders = [
-  {
-    id: "#12345",
-    customer: "Le Van C",
-    total: 1290.0,
-    status: "Pending" as OrderStatus,
-    date: "2025-10-25",
-  },
-  {
-    id: "#12346",
-    customer: "Pham Thi D",
-    total: 10.5,
-    status: "Completed" as OrderStatus,
-    date: "2025-10-24",
-  },
-  {
-    id: "#12347",
-    customer: "Le Van C",
-    total: 89.9,
-    status: "Shipping" as OrderStatus,
-    date: "2025-10-23",
-  },
-  {
-    id: "#12348",
-    customer: "Tran Thi B",
-    total: 45.0,
-    status: "Canceled" as OrderStatus,
-    date: "2025-10-22",
-  },
-];
+const OrderListItemAdmin: React.FC<{
+  item: any;
+  navigation: any;
+  onDelete: () => void;
+}> = ({ item, navigation, onDelete }) => (
+  <View style={[styles.listItem, globalStyles.shadow]}>
+    <View style={styles.itemInfo}>
+      <Text style={styles.itemName}>Mã đơn: {item.orderId}</Text>
+      <Text style={styles.itemDate}>
+        Ngày đặt: {new Date(item.orderDate).toLocaleString()}
+      </Text>
+      <Text style={styles.itemPrice}>
+        Tổng tiền: {item.totalAmount?.toLocaleString()} $
+      </Text>
+      <Text
+        style={[
+          styles.itemStatus,
+          item.status === "CANCELLED" && styles.itemStatusCancelled,
+          item.status === "DELIVERED" && styles.itemStatusCompleted,
+        ]}
+      >
+        Trạng thái: {item.status}
+      </Text>
+    </View>
 
-// Component Item cho danh sách đơn hàng
-const OrderListItem: React.FC<{ item: any; onPress: () => void }> = ({
-  item,
-  onPress,
-}) => {
-  let statusColor = COLORS.textLight;
-  if (item.status === "Completed") statusColor = "green";
-  else if (item.status === "Shipping") statusColor = COLORS.primary;
-  else if (item.status === "Canceled") statusColor = "red";
+    <View style={styles.itemActions}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate("OrderDetail", { order: item })}
+        style={styles.actionButton}
+      >
+        <Ionicons name="eye-outline" size={22} color={COLORS.primary} />
+      </TouchableOpacity>
 
-  return (
-    <TouchableOpacity
-      style={[styles.listItem, globalStyles.shadow]}
-      onPress={onPress}
-    >
-      <View style={styles.itemRow}>
-        <Text style={styles.orderId}>{item.id}</Text>
-        <Text style={[styles.orderStatus, { color: statusColor }]}>
-          {item.status}
-        </Text>
-      </View>
-      <View style={styles.itemRow}>
-        <Text style={styles.orderCustomer}>{item.customer}</Text>
-        <Text style={styles.orderTotal}>${item.total.toFixed(2)}</Text>
-      </View>
-      <Text style={styles.orderDate}>{item.date}</Text>
-    </TouchableOpacity>
-  );
-};
+      <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
+        <Ionicons name="trash-outline" size={22} color="red" />
+      </TouchableOpacity>
+    </View>
+  </View>
+);
 
-// @ts-ignore
-const OrderManagementScreen = ({ navigation }) => {
-  const [orders, setOrders] = useState(mockOrders);
-  const [filter, setFilter] = useState<OrderStatus | "All">("All");
+const OrderManagementScreen = ({ navigation }: any) => {
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredOrders = orders.filter(
-    (order) => filter === "All" || order.status === filter
-  );
+  const fetchOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.get("/api/orders");
+      setOrders(data);
+      console.log("Orders:", data);
+    } catch (error: any) {
+      console.error("Lỗi khi tải đơn hàng:", error);
+      Alert.alert("Lỗi", error.message || "Không thể tải danh sách đơn hàng");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
-  const handleViewOrderDetails = (orderId: string) => {
-    alert(`View details for order: ${orderId} (Not implemented)`);
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchOrders();
   };
+
+  const handleViewOrder = (order: any) => {
+    navigation.navigate("OrderDetail", { order });
+  };
+
+  const handleDeleteOrder = async (orderId: number) => {
+    Alert.alert("Xác nhận xóa", "Bạn có chắc muốn xóa đơn hàng này?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Xóa",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await api.delete(`/api/orders/${orderId}`);
+            setOrders((prev) => prev.filter((o) => o.orderId !== orderId));
+            Alert.alert("Thành công", "Đã xóa đơn hàng");
+          } catch (error: any) {
+            console.error("Lỗi khi xóa đơn hàng:", error);
+            Alert.alert("Lỗi", error.message || "Không thể xóa đơn hàng");
+          }
+        },
+      },
+    ]);
+  };
+
+  const filteredOrders = orders.filter((o) => {
+    const idText = o?.orderId ? o.orderId.toString() : "";
+    const statusText = o?.status ? o.status.toLowerCase() : "";
+    return (
+      idText.includes(searchQuery.toLowerCase()) ||
+      statusText.includes(searchQuery.toLowerCase())
+    );
+  });
+
+  if (loading)
+    return (
+      <View style={[globalStyles.container, { flex: 1 }]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ marginTop: 10 }}>Đang tải đơn hàng...</Text>
+      </View>
+    );
 
   return (
     <SafeAreaView style={globalStyles.safeArea}>
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.openDrawer()}
@@ -98,49 +136,31 @@ const OrderManagementScreen = ({ navigation }) => {
         >
           <Ionicons name="menu-outline" size={28} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Order Management</Text>
+        <Text style={styles.headerTitle}>Quản lý đơn hàng</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <View style={styles.container}>
-        {/* Filter Buttons */}
-        <SegmentedButtons
-          value={filter}
-          onValueChange={setFilter as any} // Cast as any to avoid type issue with 'All'
-          style={styles.segmentedButtons}
-          buttons={[
-            { value: "All", label: "All" },
-            { value: "Pending", label: "Pending" },
-            { value: "Shipping", label: "Shipping" },
-            { value: "Completed", label: "Completed" },
-            { value: "Canceled", label: "Canceled" },
-          ]}
-          theme={{
-            colors: { primary: COLORS.primary, outline: COLORS.border },
-          }}
+        <SearchBar
+          onSubmitEditing={setSearchQuery}
+          initialQuery={"Tìm mã hoặc trạng thái đơn hàng"}
         />
 
+        {/* Danh sách đơn hàng */}
         <FlatList
           data={filteredOrders}
           renderItem={({ item }) => (
-            <OrderListItem
+            <OrderListItemAdmin
               item={item}
-              onPress={() => handleViewOrderDetails(item.id)}
+              navigation={navigation}
+              onDelete={() => handleDeleteOrder(item.orderId)}
             />
           )}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          ListEmptyComponent={
-            <Text
-              style={{
-                textAlign: "center",
-                color: COLORS.textLight,
-                marginTop: 30,
-              }}
-            >
-              No orders found for this status.
-            </Text>
+          keyExtractor={(item) => item.orderId.toString()}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
           }
+          showsVerticalScrollIndicator={false}
         />
       </View>
     </SafeAreaView>
@@ -163,24 +183,23 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   container: { flex: 1, padding: SIZES.padding },
-  segmentedButtons: { marginBottom: SIZES.padding },
-  // Styles for List Item
   listItem: {
+    flexDirection: "row",
     backgroundColor: COLORS.background,
     borderRadius: SIZES.radius,
-    padding: SIZES.padding,
+    padding: 10,
     marginBottom: SIZES.padding,
+    alignItems: "center",
   },
-  itemRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  orderId: { fontSize: 16, fontWeight: "bold" },
-  orderStatus: { fontSize: 14, fontWeight: "bold" },
-  orderCustomer: { fontSize: 14, color: COLORS.textLight },
-  orderTotal: { fontSize: 16, fontWeight: "bold" },
-  orderDate: { fontSize: 12, color: COLORS.textLight, marginTop: 5 },
+  itemInfo: { flex: 1, marginRight: 10 },
+  itemName: { fontSize: 16, fontWeight: "600", marginBottom: 2 },
+  itemDate: { fontSize: 13, color: COLORS.textLight, marginVertical: 2 },
+  itemPrice: { fontSize: 14, color: COLORS.primary, fontWeight: "bold" },
+  itemStatus: { fontSize: 13, marginTop: 3, color: COLORS.text },
+  itemStatusCancelled: { color: "red" },
+  itemStatusCompleted: { color: "green" },
+  itemActions: { flexDirection: "row" },
+  actionButton: { padding: 8 },
 });
 
 export default OrderManagementScreen;
