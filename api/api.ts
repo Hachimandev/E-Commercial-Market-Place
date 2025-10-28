@@ -1,4 +1,4 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const getToken = async (): Promise<string | null> => {
   const token = await AsyncStorage.getItem("userToken");
@@ -6,7 +6,7 @@ const getToken = async (): Promise<string | null> => {
   return token;
 };
 // const IP = "192.168.1.226"; // nhập lênh ipconfig lấy địa chỉ  IPv4 Address thay là đc
-const IP = "192.168.1.4";
+const IP = "192.168.1.72";
 const PORT = 8080;
 
 export const API_BASE_URL = `http://${IP}:${PORT}`;
@@ -26,8 +26,8 @@ const request = async (endpoint: string, options: RequestInit = {}) => {
 
   try {
     const response = await fetch(url, {
-      ...options, 
-      headers: headers, 
+      ...options,
+      headers: headers,
     });
 
     if (!response.ok) {
@@ -54,4 +54,3 @@ export const api = {
     request(endpoint, { method: "PUT", body: JSON.stringify(body) }),
   delete: (endpoint: string) => request(endpoint, { method: "DELETE" }),
 };
-

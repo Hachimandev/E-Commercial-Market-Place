@@ -32,6 +32,18 @@ function ProductStack() {
   );
 }
 
+function OrderStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="OrderManagement" component={OrderManagementScreen} />
+      <Stack.Screen
+        name="OrderDetail"
+        component={require("../screens/admin/OrderDetailScreen").default}
+      />
+    </Stack.Navigator>
+  );
+}
+
 const AdminDrawerNavigator = () => {
   return (
     <Drawer.Navigator
@@ -75,7 +87,7 @@ const AdminDrawerNavigator = () => {
       />
       <Drawer.Screen
         name="OrderManagement"
-        component={OrderManagementScreen}
+        component={OrderStack}
         options={{
           title: "Order Management",
           drawerIcon: ({ color, size }) => (
