@@ -17,6 +17,8 @@ import FilterScreen from "../screens/FilterScreen";
 import SearchScreen from "../screens/SearchScreen";
 import SearchResultScreen from "../screens/SearchResultScreen";
 import InboxScreen from "../screens/InboxScreen";
+import OrderHistoryScreen from "../screens/OrderHistoryScreen";
+import OrderDetailScreen from "../screens/OrderDetailScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -93,6 +95,15 @@ function SearchStack() {
   );
 }
 
+function OrderHistoryStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="OrderHistoryBase" component={OrderHistoryScreen} />
+      <Stack.Screen name="OrderDetail" component={OrderDetailScreen} />
+    </Stack.Navigator>
+  );
+}
+
 function InboxStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -128,36 +139,10 @@ export default function BottomTabNavigator() {
             case "SearchTab":
               iconName = color === COLORS.primary ? "search" : "search-outline";
               break;
-            case "FavoritesTab":
-              return (
-                <View style={{ position: "relative" }}>
-                  <Ionicons
-                    name={color === COLORS.primary ? "heart" : "heart-outline"}
-                    size={size}
-                    color={color}
-                  />
-                  <View
-                    style={{
-                      position: "absolute",
-                      top: -5,
-                      right: -10,
-                      backgroundColor: "red",
-                      borderRadius: 10,
-                      paddingHorizontal: 5,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontSize: 10,
-                        fontWeight: "bold",
-                      }}
-                    >
-                      50+
-                    </Text>
-                  </View>
-                </View>
-              );
+            case "OrdersTab":
+              iconName =
+                color === COLORS.primary ? "receipt" : "receipt-outline";
+              break;
             case "InboxTab":
               iconName =
                 color === COLORS.primary ? "chatbox" : "chatbox-outline";
@@ -188,10 +173,9 @@ export default function BottomTabNavigator() {
         options={{ title: "Search" }}
       />
       <Tab.Screen
-        name="FavoritesTab"
-        component={PlaceholderScreen}
-        options={{ title: "Favorites" }}
-        initialParams={{ name: "Favorites" }}
+        name="OrdersTab"
+        component={OrderHistoryStack}
+        options={{ title: "Orders" }}
       />
       <Tab.Screen
         name="InboxTab"
