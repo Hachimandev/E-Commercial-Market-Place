@@ -6,7 +6,7 @@ const getToken = async (): Promise<string | null> => {
   return token;
 };
 // const IP = "192.168.1.226"; // nhập lênh ipconfig lấy địa chỉ  IPv4 Address thay là đc
-const IP = "192.168.1.72";
+const IP = "192.168.1.115";
 const PORT = 8080;
 
 export const API_BASE_URL = `http://${IP}:${PORT}`;
