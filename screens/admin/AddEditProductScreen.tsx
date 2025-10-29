@@ -7,18 +7,19 @@ import {
   TextInput,
   TouchableOpacity,
   Image,
-  Button,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
-import * as ImagePicker from "expo-image-picker"; // Cần cài: npx expo install expo-image-picker
-import { globalStyles, COLORS, SIZES } from "../../constants/styles";
-// Cần Picker, cài: npx expo install @react-native-picker/picker
+import * as ImagePicker from "expo-image-picker";
 import { Picker } from "@react-native-picker/picker";
+import { globalStyles, COLORS, SIZES } from "../../constants/styles";
+import { api } from "../../api/api";
 
 // @ts-ignore
 const AddEditProductScreen = ({ route, navigation }) => {
-  const { product } = route.params;
+  const { product, onGoBack } = route.params || {};
   const isEditing = !!product;
 
   const [name, setName] = useState(product?.name || "");
@@ -26,11 +27,10 @@ const AddEditProductScreen = ({ route, navigation }) => {
   const [price, setPrice] = useState(product?.price?.toString() || "");
   const [stock, setStock] = useState(product?.stock?.toString() || "");
   const [category, setCategory] = useState(
-    product?.category?.id || "electronics"
+    product?.category?.name || "electronics"
   );
-  const [image, setImage] = useState<string | null>(
-    product?.image?.uri || null
-  );
+  const [image, setImage] = useState<string | null>(product?.imageURL || null);
+  const [loading, setLoading] = useState(false);
 
   const categories = [
     { label: "Electronics", value: "electronics" },
@@ -39,8 +39,9 @@ const AddEditProductScreen = ({ route, navigation }) => {
     { label: "Fresh Fruits", value: "fresh fruits" },
   ];
 
+  // Mở thư viện ảnh
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
@@ -52,101 +53,102 @@ const AddEditProductScreen = ({ route, navigation }) => {
     }
   };
 
-  const handleSave = () => {
-    const productData = {
+  // Lưu hoặc cập nhật sản phẩm
+  const handleSave = async () => {
+    if (!name || !price || !stock) {
+      Alert.alert(
+        "Thiếu thông tin",
+        "Vui lòng nhập đầy đủ các trường bắt buộc."
+      );
+      return;
+    }
+
+    const newProduct = {
       name,
       description,
       price: parseFloat(price),
       stock: parseInt(stock),
-      category,
+      category: { name: category },
+      imageURL: image ? image.split("/").pop() : "placeholder.png", // Giả lập ảnh cục bộ
     };
-    console.log("Saving product:", productData);
-    navigation.goBack();
+
+    try {
+      setLoading(true);
+
+      if (isEditing) {
+        await api.put(`/api/products/${product.productId}`, newProduct);
+        Alert.alert("Thành công", "Đã cập nhật sản phẩm!");
+      } else {
+        await api.post("/api/products", newProduct);
+        Alert.alert("Thành công", "Đã thêm sản phẩm mới!");
+      }
+
+      if (onGoBack) onGoBack();
+      navigation.goBack();
+    } catch (error: any) {
+      console.error("❌ Lỗi lưu sản phẩm:", error.message);
+      Alert.alert("Lỗi", "Không thể lưu sản phẩm. Vui lòng thử lại.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <SafeAreaView style={globalStyles.safeArea}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={{ padding: 10 }}
-        >
-          <Ionicons name="close-outline" size={28} color={COLORS.text} />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back-outline" size={26} color={COLORS.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>
-          {isEditing ? "Edit Product" : "Add New Product"}
+          {isEditing ? "Edit Product" : "Add Product"}
         </Text>
-        <TouchableOpacity onPress={handleSave} style={{ padding: 10 }}>
-          <Text style={{ color: COLORS.primary, fontWeight: "bold" }}>
-            Save
-          </Text>
-        </TouchableOpacity>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Image Picker */}
-        <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-          {image ? (
-            <Image source={{ uri: image }} style={styles.productImage} />
-          ) : (
-            <View style={styles.imagePlaceholder}>
-              <Ionicons
-                name="camera-outline"
-                size={40}
-                color={COLORS.textLight}
-              />
-              <Text style={{ color: COLORS.textLight }}>Select Image</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-
-        {/* Form Fields */}
-        <Text style={styles.label}>Product Name</Text>
+      <ScrollView
+        contentContainerStyle={{ padding: SIZES.padding, paddingBottom: 100 }}
+      >
+        <Text style={styles.label}>Tên sản phẩm</Text>
         <TextInput
           style={styles.input}
           value={name}
           onChangeText={setName}
-          placeholder="Enter product name"
+          placeholder="Nhập tên sản phẩm"
         />
 
-        <Text style={styles.label}>Description</Text>
+        <Text style={styles.label}>Mô tả</Text>
         <TextInput
-          style={[styles.input, styles.textArea]}
+          style={[styles.input, { height: 100, textAlignVertical: "top" }]}
           value={description}
           onChangeText={setDescription}
-          placeholder="Enter description"
+          placeholder="Nhập mô tả sản phẩm"
           multiline
         />
 
-        <View style={styles.row}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Price ($)</Text>
-            <TextInput
-              style={styles.input}
-              value={price}
-              onChangeText={setPrice}
-              placeholder="0.00"
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Stock Quantity</Text>
-            <TextInput
-              style={styles.input}
-              value={stock}
-              onChangeText={setStock}
-              placeholder="0"
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
+        <Text style={styles.label}>Giá ($)</Text>
+        <TextInput
+          style={styles.input}
+          value={price}
+          onChangeText={setPrice}
+          keyboardType="numeric"
+          placeholder="Nhập giá sản phẩm"
+        />
 
-        <Text style={styles.label}>Category</Text>
+        <Text style={styles.label}>Số lượng tồn</Text>
+        <TextInput
+          style={styles.input}
+          value={stock}
+          onChangeText={setStock}
+          keyboardType="numeric"
+          placeholder="Nhập số lượng tồn"
+        />
+
+        <Text style={styles.label}>Danh mục</Text>
         <View style={styles.pickerContainer}>
           <Picker
             selectedValue={category}
-            onValueChange={(itemValue) => setCategory(itemValue)}
+            onValueChange={(value) => setCategory(value)}
+            style={{ color: COLORS.text }}
           >
             {categories.map((cat) => (
               <Picker.Item
@@ -157,6 +159,39 @@ const AddEditProductScreen = ({ route, navigation }) => {
             ))}
           </Picker>
         </View>
+
+        <Text style={styles.label}>Ảnh sản phẩm</Text>
+        <TouchableOpacity onPress={pickImage} style={styles.imagePicker}>
+          {image ? (
+            <Image
+              source={{ uri: image }}
+              style={{ width: 120, height: 120, borderRadius: 8 }}
+            />
+          ) : (
+            <View style={styles.imagePlaceholder}>
+              <Ionicons
+                name="camera-outline"
+                size={40}
+                color={COLORS.textLight}
+              />
+              <Text style={{ color: COLORS.textLight }}>Chọn ảnh</Text>
+            </View>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSave}
+          disabled={loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>
+              {isEditing ? "Cập nhật" : "Thêm mới"}
+            </Text>
+          )}
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -170,40 +205,58 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     backgroundColor: COLORS.background,
-    justifyContent: "space-between",
+    paddingHorizontal: 10,
   },
-  headerTitle: { fontSize: 20, fontWeight: "bold" },
-  container: { padding: SIZES.padding },
-  imagePicker: { alignItems: "center", marginBottom: 20 },
-  imagePlaceholder: {
-    width: 150,
-    height: 150,
-    borderRadius: SIZES.radius,
-    backgroundColor: COLORS.surface,
-    justifyContent: "center",
-    alignItems: "center",
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "bold",
   },
-  productImage: { width: 150, height: 150, borderRadius: SIZES.radius },
   label: {
-    fontSize: 16,
-    fontWeight: "500",
+    fontWeight: "600",
     marginBottom: 5,
     color: COLORS.text,
+    marginTop: 15,
   },
   input: {
-    backgroundColor: COLORS.surface,
-    borderRadius: SIZES.radius,
-    padding: 15,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    padding: 10,
     fontSize: 16,
-    marginBottom: 15,
-  },
-  textArea: { height: 100, textAlignVertical: "top" },
-  row: { flexDirection: "row", justifyContent: "space-between" },
-  inputGroup: { width: "48%" },
-  pickerContainer: {
     backgroundColor: COLORS.surface,
-    borderRadius: SIZES.radius,
-    marginBottom: 15,
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    backgroundColor: COLORS.surface,
+  },
+  imagePicker: {
+    marginTop: 5,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  imagePlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  saveButtonText: {
+    color: COLORS.background,
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
 

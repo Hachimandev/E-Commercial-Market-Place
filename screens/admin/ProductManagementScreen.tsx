@@ -39,26 +39,15 @@ const ProductManagementScreen = ({ navigation }) => {
   };
 
   // 🔹 Xóa sản phẩm
-  const handleDeleteProduct = (productId: number) => {
-    Alert.alert("Xác nhận xóa", "Bạn có chắc chắn muốn xóa sản phẩm này?", [
-      { text: "Hủy", style: "cancel" },
-      {
-        text: "Xóa",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await api.delete(`/api/products/${productId}`);
-            setProducts((prev) =>
-              prev.filter((p) => p.productId !== productId)
-            );
-            Alert.alert("Thành công", "Đã xóa sản phẩm.");
-          } catch (error: any) {
-            console.error("❌ Lỗi xóa sản phẩm:", error.message);
-            Alert.alert("Lỗi", "Không thể xóa sản phẩm.");
-          }
-        },
-      },
-    ]);
+  const handleDeleteProduct = async (productId: number) => {
+    console.log("Gửi DELETE tới:", productId);
+    try {
+      await api.delete(`/api/products/${productId}`);
+      setProducts((prev) => prev.filter((p) => p.productId !== productId));
+      Alert.alert("Đã xoá thành công!");
+    } catch (error: any) {
+      console.error(" Lỗi xoá sản phẩm:", error);
+    }
   };
 
   useEffect(() => {
@@ -70,11 +59,14 @@ const ProductManagementScreen = ({ navigation }) => {
   );
 
   const handleAddProduct = () => {
-    navigation.navigate("AddEditProduct", { product: null });
+    navigation.navigate("AddEditProduct", {
+      product: null,
+      onGoBack: fetchProducts,
+    });
   };
 
   const handleEditProduct = (product: any) => {
-    navigation.navigate("AddEditProduct", { product });
+    navigation.navigate("AddEditProduct", { product, onGoBack: fetchProducts });
   };
 
   return (
@@ -144,7 +136,6 @@ const ProductManagementScreen = ({ navigation }) => {
   );
 };
 
-// ✅ Thành phần hiển thị từng sản phẩm (chỉ dùng ảnh local)
 const ProductListItemAdmin = ({ item, onEdit, onDelete }: any) => (
   <View style={[styles.listItem, globalStyles.shadow]}>
     <Image source={getLocalImage(item.imageURL)} style={styles.itemImage} />
@@ -166,7 +157,13 @@ const ProductListItemAdmin = ({ item, onEdit, onDelete }: any) => (
       <TouchableOpacity onPress={onEdit} style={styles.actionButton}>
         <Ionicons name="pencil-outline" size={20} color={COLORS.primary} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={onDelete} style={styles.actionButton}>
+      <TouchableOpacity
+        onPress={() => {
+          console.log("Nhấn xoá:", item.productId);
+          onDelete();
+        }}
+        style={styles.actionButton}
+      >
         <Ionicons name="trash-outline" size={20} color="red" />
       </TouchableOpacity>
     </View>
