@@ -5,6 +5,7 @@ import { StyleSheet } from 'react-native';
 
 export const COLORS = {
   primary: '#008B8B', 
+  primaryLight: '#B2DFDB',
   secondary: '#FF6347', 
   background: '#FFFFFF',
   textDark: "#1E293B",
@@ -13,6 +14,11 @@ export const COLORS = {
   textLight: '#888888',
   border: '#EEEEEE',
   accent: '#FFD700', 
+  success: '#4CAF50',    
+  info: '#2196F3',        
+  warning: '#FF9800',     
+  error: '#F44336',     
+  white: '#FFFFFF'
 };
 
 export const SIZES = {
