@@ -22,6 +22,7 @@ export const COLORS = {
 };
 
 export const SIZES = {
+  base: 8,
   padding: 15,
   radius: 10,
   h1: 28,
