@@ -1,3 +1,4 @@
+// E-Commercial-Market-Place/components/SearchBar.tsx
 import React, { useState, useEffect } from "react";
 import { View, TextInput, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,7 +14,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   initialQuery = "",
   onSubmitEditing,
 }) => {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const [query, setQuery] = useState(initialQuery);
 
   useEffect(() => {
@@ -21,59 +22,74 @@ const SearchBar: React.FC<SearchBarProps> = ({
   }, [initialQuery]);
 
   const handleSubmit = () => {
-    if (onSubmitEditing && query.trim().length > 0) {
-      onSubmitEditing(query);
+    const trimmed = query.trim();
+    if (!trimmed) return;
+
+    if (onSubmitEditing) {
+      onSubmitEditing(trimmed);
+    } else {
+      navigation.navigate("SearchTab", {
+        screen: "SearchResult",
+        params: { query: trimmed, filters: null },
+      });
     }
   };
 
+  const handleFilterPress = () => {
+    navigation.navigate("Filter", { query });
+  };
+
   return (
-    <View style={styles.searchBar}>
-      <Ionicons
-        name="search-outline"
-        size={20}
-        color={COLORS.textLight}
-        style={styles.searchIcon}
-      />
-      <TextInput
-        placeholder="Search for product"
-        placeholderTextColor={COLORS.textLight}
-        style={styles.searchInput}
-        value={query}
-        onChangeText={setQuery}
-        onSubmitEditing={handleSubmit}
-        returnKeyType="search"
-      />
-      <TouchableOpacity
-        style={styles.filterButton}
-        // @ts-ignore
-        onPress={() => navigation.navigate("Filter")}
-      >
-        <Ionicons name="options-outline" size={24} color={COLORS.textLight} />
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.searchBar}>
+        <Ionicons
+          name="search-outline"
+          size={22}
+          color={COLORS.textLight}
+          style={styles.iconLeft}
+        />
+        <TextInput
+          placeholder="Tìm kiếm sản phẩm..."
+          placeholderTextColor={COLORS.textLight}
+          style={styles.input}
+          value={query}
+          onChangeText={setQuery}
+          onSubmitEditing={handleSubmit}
+          returnKeyType="search"
+        />
+        <TouchableOpacity onPress={handleFilterPress} style={styles.iconButton}>
+          <Ionicons name="filter-outline" size={22} color={COLORS.textLight} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    marginVertical: SIZES.base * 2,
+    marginHorizontal: SIZES.base * 2,
+  },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: COLORS.surface,
-    borderRadius: SIZES.radius,
-    marginVertical: 15,
-    paddingHorizontal: 10,
-    height: 50,
+    borderRadius: SIZES.radius * 1.2,
+    paddingHorizontal: SIZES.base * 1.5,
+    height: 48,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  searchIcon: {
-    marginRight: 10,
+  iconLeft: {
+    marginRight: SIZES.base,
   },
-  searchInput: {
+  input: {
     flex: 1,
     fontSize: 16,
     color: COLORS.text,
   },
-  filterButton: {
-    padding: 5,
+  iconButton: {
+    paddingLeft: SIZES.base,
   },
 });
 

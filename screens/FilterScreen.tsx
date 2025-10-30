@@ -16,6 +16,7 @@ import { globalStyles, COLORS, SIZES } from "../constants/styles";
 
 const { width } = Dimensions.get("window");
 
+// 🌟 Section có thể thu gọn
 const CollapsibleSection: React.FC<{
   title: string;
   children: React.ReactNode;
@@ -31,7 +32,7 @@ const CollapsibleSection: React.FC<{
         <Text style={styles.sectionTitle}>{title}</Text>
         <Ionicons
           name={isOpen ? "chevron-up" : "chevron-down"}
-          size={20}
+          size={22}
           color={COLORS.textLight}
         />
       </TouchableOpacity>
@@ -41,11 +42,18 @@ const CollapsibleSection: React.FC<{
 };
 
 // @ts-ignore
-const FilterScreen = ({ navigation }) => {
+const FilterScreen = ({ route, navigation }) => {
+  const { query: currentQuery, filters: currentFilters } = route.params || {};
+
   const [shipping, setShipping] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([10, 1000]);
-  const [rating, setRating] = useState(0);
-  const [others, setOthers] = useState<string[]>(["30-day Free Return"]);
+  const [priceRange, setPriceRange] = useState([
+    currentFilters?.minPrice || 0,
+    currentFilters?.maxPrice || 5000,
+  ]);
+  const [rating, setRating] = useState(currentFilters?.minRating || 0);
+  const [others, setOthers] = useState<string[]>(
+    currentFilters?.featureText ? [currentFilters.featureText] : []
+  );
 
   const toggleShipping = (option: string) => {
     setShipping((prev) =>
@@ -56,19 +64,37 @@ const FilterScreen = ({ navigation }) => {
   };
 
   const toggleOther = (option: string) => {
-    setOthers((prev) =>
-      prev.includes(option)
-        ? prev.filter((item) => item !== option)
-        : [...prev, option]
+    setOthers(
+      (prev) => (prev.includes(option) ? [] : [option]) // chỉ chọn 1
     );
+  };
+
+  const handleReset = () => {
+    setShipping([]);
+    setPriceRange([0, 5000]);
+    setRating(0);
+    setOthers([]);
+  };
+
+  const handleApplyFilters = () => {
+    const newFilters = {
+      minPrice: priceRange[0],
+      maxPrice: priceRange[1],
+      minRating: rating,
+      featureText: others.length > 0 ? others[0] : null,
+    };
+
+    navigation.navigate("SearchResult", {
+      query: currentQuery || "",
+      filters: newFilters,
+    });
   };
 
   return (
     <SafeAreaView style={globalStyles.safeArea}>
-      {/* Header */}
+      {/* 🌟 Header */}
       <View style={styles.header}>
-        <View style={{ width: 40 }} /> {/* Đệm trái */}
-        <Text style={styles.headerTitle}>Filter</Text>
+        <Text style={styles.headerTitle}>Bộ lọc tìm kiếm</Text>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.closeButton}
@@ -77,72 +103,77 @@ const FilterScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
+      {/* 🌟 Nội dung */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        {/* Shipping Options */}
-        <CollapsibleSection title="Shipping options">
+        {/* Giao hàng */}
+        <CollapsibleSection title="Phương thức giao hàng">
           <Checkbox.Item
-            label="Instant (2 hours delivery)"
+            label="Giao nhanh trong 2 giờ"
             status={shipping.includes("instant") ? "checked" : "unchecked"}
             onPress={() => toggleShipping("instant")}
             labelStyle={styles.checkboxLabel}
             color={COLORS.primary}
           />
           <Checkbox.Item
-            label="Express (2 days delivery)"
+            label="Giao tiêu chuẩn (2 - 3 ngày)"
             status={shipping.includes("express") ? "checked" : "unchecked"}
             onPress={() => toggleShipping("express")}
             labelStyle={styles.checkboxLabel}
             color={COLORS.primary}
           />
           <Checkbox.Item
-            label="Standard (7- 10 days delivery)"
+            label="Giao tiết kiệm (5 - 7 ngày)"
             status={shipping.includes("standard") ? "checked" : "unchecked"}
             onPress={() => toggleShipping("standard")}
             labelStyle={styles.checkboxLabel}
             color={COLORS.primary}
           />
         </CollapsibleSection>
-        {/* Price Range */}
-        <CollapsibleSection title="Price range">
+
+        {/* Khoảng giá */}
+        <CollapsibleSection title="Khoảng giá (VNĐ)">
           <View style={styles.priceInputContainer}>
             <TextInput
               style={styles.priceInput}
-              value={`$ ${priceRange[0]}`}
+              value={`${priceRange[0].toLocaleString()}₫`}
               keyboardType="numeric"
               onChangeText={(text) =>
-                setPriceRange([Number(text.replace("$", "")), priceRange[1]])
+                setPriceRange([
+                  Number(text.replace(/[^0-9]/g, "")),
+                  priceRange[1],
+                ])
               }
             />
             <TextInput
               style={styles.priceInput}
-              value={`$ ${priceRange[1]}`}
+              value={`${priceRange[1].toLocaleString()}₫`}
               keyboardType="numeric"
               onChangeText={(text) =>
-                setPriceRange([priceRange[0], Number(text.replace("$", ""))])
+                setPriceRange([
+                  priceRange[0],
+                  Number(text.replace(/[^0-9]/g, "")),
+                ])
               }
             />
           </View>
           <View style={{ alignItems: "center" }}>
             <MultiSlider
               values={[priceRange[0], priceRange[1]]}
-              onValuesChange={(values) => setPriceRange(values)}
+              onValuesChange={(values) => setPriceRange([values[0], values[1]])}
               min={0}
               max={5000}
               step={10}
               sliderLength={width - SIZES.padding * 4}
               selectedStyle={{ backgroundColor: COLORS.primary }}
               unselectedStyle={{ backgroundColor: COLORS.border }}
-              markerStyle={{
-                backgroundColor: COLORS.background,
-                borderWidth: 2,
-                borderColor: COLORS.primary,
-              }}
+              markerStyle={styles.sliderMarker}
               containerStyle={{ height: 30 }}
             />
           </View>
         </CollapsibleSection>
-        {/* Average Review */}
-        <CollapsibleSection title="Average review">
+
+        {/* Đánh giá */}
+        <CollapsibleSection title="Đánh giá trung bình">
           <View style={styles.ratingContainer}>
             {[1, 2, 3, 4, 5].map((star) => (
               <TouchableOpacity key={star} onPress={() => setRating(star)}>
@@ -154,11 +185,12 @@ const FilterScreen = ({ navigation }) => {
                 />
               </TouchableOpacity>
             ))}
-            <Text style={styles.ratingText}>& Up</Text>
+            <Text style={styles.ratingText}>trở lên</Text>
           </View>
         </CollapsibleSection>
-        {/* Others */}
-        <CollapsibleSection title="Others">
+
+        {/* Khác */}
+        <CollapsibleSection title="Tùy chọn khác">
           <View style={styles.othersContainer}>
             <TouchableOpacity
               style={[
@@ -184,129 +216,44 @@ const FilterScreen = ({ navigation }) => {
                     styles.otherTextActive,
                 ]}
               >
-                30-day Free Return
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.otherButton,
-                others.includes("Buyer Protection") && styles.otherButtonActive,
-              ]}
-              onPress={() => toggleOther("Buyer Protection")}
-            >
-              <Ionicons
-                name="shield-checkmark-outline"
-                size={24}
-                color={
-                  others.includes("Buyer Protection")
-                    ? COLORS.primary
-                    : COLORS.textLight
-                }
-              />
-              <Text
-                style={[
-                  styles.otherText,
-                  others.includes("Buyer Protection") && styles.otherTextActive,
-                ]}
-              >
-                Buyer Protection
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.otherButton,
-                others.includes("Best Deal") && styles.otherButtonActive,
-              ]}
-              onPress={() => toggleOther("Best Deal")}
-            >
-              <Ionicons
-                name="pricetag-outline"
-                size={24}
-                color={
-                  others.includes("Best Deal")
-                    ? COLORS.primary
-                    : COLORS.textLight
-                }
-              />
-              <Text
-                style={[
-                  styles.otherText,
-                  others.includes("Best Deal") && styles.otherTextActive,
-                ]}
-              >
-                Best Deal
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.otherButton,
-                others.includes("Ship to store") && styles.otherButtonActive,
-              ]}
-              onPress={() => toggleOther("Ship to store")}
-            >
-              <Ionicons
-                name="location-outline"
-                size={24}
-                color={
-                  others.includes("Ship to store")
-                    ? COLORS.primary
-                    : COLORS.textLight
-                }
-              />
-              <Text
-                style={[
-                  styles.otherText,
-                  others.includes("Ship to store") && styles.otherTextActive,
-                ]}
-              >
-                Ship to store
+                Đổi trả miễn phí 30 ngày
               </Text>
             </TouchableOpacity>
           </View>
         </CollapsibleSection>
-        <View style={{ height: 100 }} /> {/* Đệm cho footer */}
       </ScrollView>
 
-      {/* Sticky Footer (Phần hoàn thiện) */}
+      {/* 🌟 Footer cố định */}
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.resetButton}
-          onPress={() => {
-            // Reset all states
-            setShipping([]);
-            setPriceRange([10, 1000]);
-            setRating(0);
-            setOthers([]);
-          }}
-        >
-          <Text style={styles.resetButtonText}>Reset</Text>
+        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+          <Text style={styles.resetButtonText}>Đặt lại</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.applyButton}
-          onPress={() => navigation.goBack()}
+          onPress={handleApplyFilters}
         >
-          <Text style={styles.applyButtonText}>Apply Filters</Text>
+          <Text style={styles.applyButtonText}>Áp dụng</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
 };
 
+// 🌟 Style tinh gọn & hiện đại
 const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: SIZES.padding,
+    paddingHorizontal: SIZES.padding,
+    paddingVertical: 15,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: "700",
+    color: COLORS.textDark,
   },
   closeButton: {
     width: 40,
@@ -315,11 +262,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   scrollContainer: {
-    paddingBottom: 100, // Đảm bảo không bị che bởi footer
+    paddingBottom: 120,
   },
   section: {
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.surface,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -328,16 +276,17 @@ const styles = StyleSheet.create({
     padding: SIZES.padding,
   },
   sectionTitle: {
-    fontSize: SIZES.h3,
+    fontSize: 16,
     fontWeight: "600",
+    color: COLORS.textDark,
   },
   sectionContent: {
-    padding: SIZES.padding,
-    paddingTop: 0,
+    paddingHorizontal: SIZES.padding,
+    paddingBottom: 15,
   },
   checkboxLabel: {
-    fontSize: 14,
-    color: COLORS.text,
+    fontSize: 15,
+    color: COLORS.textDark,
   },
   priceInputContainer: {
     flexDirection: "row",
@@ -345,13 +294,20 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   priceInput: {
-    width: "45%",
-    height: 50,
+    width: "47%",
+    height: 48,
     borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: SIZES.radius,
-    paddingHorizontal: 10,
-    fontSize: 16,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    color: COLORS.textDark,
+    backgroundColor: COLORS.background,
+  },
+  sliderMarker: {
+    backgroundColor: COLORS.background,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
   },
   ratingContainer: {
     flexDirection: "row",
@@ -380,19 +336,21 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 10,
+    backgroundColor: COLORS.background,
   },
   otherButtonActive: {
     borderColor: COLORS.primary,
-    backgroundColor: "#E0F7FA",
+    backgroundColor: COLORS.primaryLight,
   },
   otherText: {
     marginTop: 5,
     color: COLORS.textLight,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "500",
   },
   otherTextActive: {
     color: COLORS.primary,
+    fontWeight: "600",
   },
   footer: {
     position: "absolute",

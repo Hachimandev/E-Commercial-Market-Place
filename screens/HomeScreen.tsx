@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   FlatList,
   Image,
   ImageSourcePropType,
+  ActivityIndicator,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
@@ -18,6 +19,8 @@ import SearchBar from "../components/SearchBar";
 import { globalStyles, COLORS, SIZES } from "../constants/styles";
 import { useCart } from "../context/CartContext";
 import { useFocusEffect } from "@react-navigation/native";
+import { api, API_BASE_URL } from "../api/api";
+import { getLocalImage } from "../constants/imageMap";
 
 const categories = [
   {
@@ -56,37 +59,20 @@ interface RecommendedProduct {
   rating: number;
   price: number;
   image: ImageSourcePropType;
+  detailScreen: "ProductDetailGeneral" | "ProductDetailVariant";
 }
-
-const recommendedProducts: RecommendedProduct[] = [
-  {
-    id: "a",
-    name: "Shoes",
-    rating: 4.5,
-    price: 299,
-    image: require("../assets/img/shoes-boot.png"),
-  },
-  {
-    id: "b",
-    name: "Tablet",
-    rating: 4.8,
-    price: 499,
-    image: require("../assets/img/tablet.png"),
-  },
-  {
-    id: "c",
-    name: "Pear",
-    rating: 4.3,
-    price: 12,
-    image: require("../assets/img/pear.png"),
-  },
-];
 
 // @ts-ignore
 const HomeScreen: React.FC = ({ navigation }) => {
   const { loadCart } = useCart();
 
   const [itemCount, setItemCount] = useState(0);
+
+  const [recommendedProducts, setRecommendedProducts] = useState<
+    RecommendedProduct[]
+  >([]);
+  const [loadingRecommended, setLoadingRecommended] = useState(true);
+  const [errorRecommended, setErrorRecommended] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -102,6 +88,45 @@ const HomeScreen: React.FC = ({ navigation }) => {
       fetchCartCount();
     }, [loadCart])
   );
+
+  useEffect(() => {
+    const fetchRecommendedProducts = async () => {
+      setLoadingRecommended(true);
+      setErrorRecommended(null);
+      try {
+        // 1. Gọi API endpoint mới
+        const data = await api.get("/api/products/recommended");
+
+        // 2. Map dữ liệu API sang interface Frontend
+        const mappedProducts: RecommendedProduct[] = data.map((item: any) => {
+          // (Logic xác định màn hình chi tiết, bạn có thể cần 'item.category.name')
+          const categoryName = item.category?.name?.toLowerCase() || "";
+          const detailScreenTarget =
+            categoryName === "fashion" || categoryName === "beauty"
+              ? "ProductDetailVariant"
+              : "ProductDetailGeneral";
+
+          return {
+            id: item.productId.toString(),
+            name: item.name,
+            rating: item.rating,
+            price: item.price,
+            image: getLocalImage(item.imageURL, API_BASE_URL), // Map ảnh
+            detailScreen: detailScreenTarget, // Lưu màn hình chi tiết
+          };
+        });
+
+        setRecommendedProducts(mappedProducts);
+      } catch (err: any) {
+        console.error("Failed to fetch recommended products:", err);
+        setErrorRecommended(err.message || "Could not load recommendations.");
+      } finally {
+        setLoadingRecommended(false);
+      }
+    };
+
+    fetchRecommendedProducts(); // Gọi hàm fetch
+  }, []);
 
   const handleCategoryPress = (item: any) => {
     navigation.navigate(item.targetScreen, { categoryName: item.name });
@@ -202,22 +227,37 @@ const HomeScreen: React.FC = ({ navigation }) => {
         </View>
 
         {/* Recommended Products */}
-        <FlatList
-          data={recommendedProducts}
-          renderItem={({ item }) => (
-            <ProductCard
-              name={item.name}
-              rating={item.rating || 0}
-              price={item.price || 0}
-              imageSource={item.image}
-              // onPress={() => navigation.push('ProductDetailGeneral', { productId: item.id, name: item.name })}
-            />
-          )}
-          keyExtractor={(item) => item.id}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.productList}
-        />
+        {loadingRecommended ? (
+          <ActivityIndicator
+            size="large"
+            color={COLORS.primary}
+            style={{ marginVertical: 30 }}
+          />
+        ) : errorRecommended ? (
+          <Text style={styles.errorText}>{errorRecommended}</Text>
+        ) : (
+          <FlatList
+            data={recommendedProducts} // <-- Sử dụng data từ state API
+            renderItem={({ item }) => (
+              <ProductCard
+                name={item.name}
+                rating={item.rating}
+                price={item.price}
+                imageSource={item.image}
+                onPress={() =>
+                  navigation.navigate(item.detailScreen, {
+                    productId: item.id,
+                    name: item.name,
+                  })
+                }
+              />
+            )}
+            keyExtractor={(item) => item.id}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.productList}
+          />
+        )}
 
         {/* Đệm dưới cùng */}
         <View style={{ height: 50 }} />
@@ -343,6 +383,13 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 10,
     fontWeight: "bold",
+  },
+  errorText: {
+    // Style cho text báo lỗi
+    textAlign: "center",
+    color: COLORS.error,
+    marginTop: 20,
+    fontSize: 14,
   },
 });
 
