@@ -1,12 +1,20 @@
-// E-Commercial-Market-Place/screens/admin/DashboardScreen.tsx
-import React from "react";
-import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
+// DashboardScreen.tsx
+import React, { useLayoutEffect } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LineChart } from "react-native-chart-kit";
+import { DrawerActions, useNavigation } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../../constants/styles";
-import StatCard from "../../components/admin/StatCard"; // Import component mới
+import StatCard from "../../components/admin/StatCard";
 
-// Mock Data
 const dashboardStats = {
   totalProducts: 125,
   totalUsers: 580,
@@ -19,7 +27,7 @@ const revenueData = {
   datasets: [
     {
       data: [20, 45, 28, 80, 99, 43],
-      color: (opacity = 1) => `rgba(0, 139, 139, ${opacity})`, // Màu primary
+      color: (o = 1) => `rgba(0,139,139,${o})`,
       strokeWidth: 2,
     },
   ],
@@ -34,14 +42,29 @@ const topSelling = [
 
 const screenWidth = Dimensions.get("window").width;
 
-// @ts-ignore
-const DashboardScreen = ({ navigation }) => {
+const DashboardScreen = () => {
+  const navigation = useNavigation();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTitle: "Admin Dashboard",
+      headerLeft: () => (
+        <TouchableOpacity
+          style={{ marginLeft: 15 }}
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+        >
+          <Ionicons name="menu" size={26} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
   return (
     <SafeAreaView style={globalStyles.safeArea}>
       <ScrollView style={styles.container}>
         <Text style={styles.title}>Dashboard Overview</Text>
 
-        {/* Stat Cards */}
         <View style={styles.statsRow}>
           <StatCard
             icon="cube-outline"
@@ -71,15 +94,14 @@ const DashboardScreen = ({ navigation }) => {
           />
         </View>
 
-        {/* Revenue Chart */}
         <View style={styles.chartContainer}>
           <Text style={globalStyles.sectionTitle}>Revenue (Last 6 Months)</Text>
           <LineChart
             data={revenueData}
-            width={screenWidth - SIZES.padding * 2} // from react-native
+            width={screenWidth - SIZES.padding * 2}
             height={220}
             yAxisLabel="$"
-            yAxisSuffix="k" // Giả sử đơn vị nghìn đô
+            yAxisSuffix="k"
             yAxisInterval={1}
             chartConfig={{
               backgroundColor: COLORS.background,
@@ -95,12 +117,11 @@ const DashboardScreen = ({ navigation }) => {
                 stroke: COLORS.primary,
               },
             }}
-            bezier // Đường cong mượt
+            bezier
             style={styles.chart}
           />
         </View>
 
-        {/* Top Selling Products */}
         <View style={styles.topSellingContainer}>
           <Text style={globalStyles.sectionTitle}>Top Selling Products</Text>
           {topSelling.map((item) => (
@@ -119,31 +140,16 @@ const DashboardScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: SIZES.padding,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
-  },
+  container: { flex: 1, padding: SIZES.padding },
+  title: { fontSize: 24, fontWeight: "bold", marginBottom: 20 },
   statsRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 5, // Giảm khoảng cách giữa các hàng
+    marginBottom: 5,
   },
-  chartContainer: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  chart: {
-    marginVertical: 8,
-    borderRadius: SIZES.radius,
-  },
-  topSellingContainer: {
-    marginTop: 20,
-  },
+  chartContainer: { marginTop: 20, alignItems: "center" },
+  chart: { marginVertical: 8, borderRadius: SIZES.radius },
+  topSellingContainer: { marginTop: 20 },
   topSellingItem: {
     backgroundColor: COLORS.background,
     padding: SIZES.padding,
@@ -153,14 +159,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  topSellingName: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  topSellingSales: {
-    fontSize: 14,
-    color: COLORS.textLight,
-  },
+  topSellingName: { fontSize: 16, fontWeight: "500" },
+  topSellingSales: { fontSize: 14, color: COLORS.textLight },
 });
 
 export default DashboardScreen;

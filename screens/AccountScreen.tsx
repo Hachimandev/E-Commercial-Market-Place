@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useLayoutEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -18,7 +18,8 @@ import {
 } from "react-native-paper";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "../context/AuthContext";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, DrawerActions } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
 
 const AccountScreen = () => {
   const navigation: any = useNavigation();
@@ -42,6 +43,23 @@ const AccountScreen = () => {
       "Thông tin tài khoản của bạn đã được cập nhật!"
     );
   };
+
+  useLayoutEffect(() => {
+    if (user?.role === "SELLER") {
+      navigation.setOptions({
+        headerShown: true,
+        title: "Account",
+        headerLeft: () => (
+          <Ionicons
+            name="menu"
+            size={26}
+            style={{ marginLeft: 14 }}
+            onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          />
+        ),
+      });
+    }
+  }, [navigation, user]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>

@@ -64,7 +64,7 @@ const OrderManagementScreen = ({ navigation }: any) => {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.get("/api/orders");
+      const data = await api.get("/api/orders/admin");
       setOrders(data);
       console.log("Orders:", data);
     } catch (error: any) {
@@ -97,7 +97,7 @@ const OrderManagementScreen = ({ navigation }: any) => {
         style: "destructive",
         onPress: async () => {
           try {
-            await api.delete(`/api/orders/${orderId}`);
+            await api.delete(`/api/orders/admin/${orderId}`);
             setOrders((prev) => prev.filter((o) => o.orderId !== orderId));
             Alert.alert("Thành công", "Đã xóa đơn hàng");
           } catch (error: any) {
@@ -141,10 +141,7 @@ const OrderManagementScreen = ({ navigation }: any) => {
       </View>
 
       <View style={styles.container}>
-        <SearchBar
-          onSubmitEditing={setSearchQuery}
-          initialQuery={"Tìm mã hoặc trạng thái đơn hàng"}
-        />
+        <SearchBar onSubmitEditing={setSearchQuery} />
 
         {/* Danh sách đơn hàng */}
         <FlatList
