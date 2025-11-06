@@ -39,7 +39,6 @@ const AddEditProductScreen = ({ route, navigation }) => {
     { label: "Fresh Fruits", value: "fresh fruits" },
   ];
 
-  // Mở thư viện ảnh
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -53,7 +52,6 @@ const AddEditProductScreen = ({ route, navigation }) => {
     }
   };
 
-  // Lưu hoặc cập nhật sản phẩm
   const handleSave = async () => {
     if (!name || !price || !stock) {
       Alert.alert(
@@ -69,7 +67,7 @@ const AddEditProductScreen = ({ route, navigation }) => {
       price: parseFloat(price),
       stock: parseInt(stock),
       category: { name: category },
-      imageURL: image ? image.split("/").pop() : "placeholder.png", // Giả lập ảnh cục bộ
+      imageURL: image ? image.split("/").pop() : "placeholder.png",
     };
 
     try {
@@ -86,7 +84,7 @@ const AddEditProductScreen = ({ route, navigation }) => {
       if (onGoBack) onGoBack();
       navigation.goBack();
     } catch (error: any) {
-      console.error("❌ Lỗi lưu sản phẩm:", error.message);
+      console.error("Lỗi lưu sản phẩm:", error.message);
       Alert.alert("Lỗi", "Không thể lưu sản phẩm. Vui lòng thử lại.");
     } finally {
       setLoading(false);

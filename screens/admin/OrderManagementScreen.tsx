@@ -64,7 +64,7 @@ const OrderManagementScreen = ({ navigation }: any) => {
   const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await api.get("/api/orders/admin");
+      const data = await api.get("/api/orders");
       setOrders(data);
       console.log("Orders:", data);
     } catch (error: any) {
