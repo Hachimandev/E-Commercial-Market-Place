@@ -1,3 +1,4 @@
+// navigation/AdminDrawerNavigator.tsx
 import React from "react";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -49,10 +50,23 @@ const AdminDrawerNavigator = () => {
     <Drawer.Navigator
       initialRouteName="Dashboard"
       screenOptions={{
-        headerTintColor: COLORS.text,
+        headerShown: false,
         drawerActiveTintColor: COLORS.primary,
         drawerInactiveTintColor: COLORS.textLight,
-        drawerLabelStyle: { marginLeft: -20 },
+        drawerStyle: {
+          width: 260,
+          backgroundColor: "#F8F9FA",
+          borderTopRightRadius: 25,
+          borderBottomRightRadius: 25,
+        },
+        drawerLabelStyle: { marginLeft: -5, fontSize: 16, fontWeight: "600" },
+        drawerActiveBackgroundColor: "rgba(0,139,139,0.12)",
+        drawerItemStyle: {
+          paddingVertical: 8,
+          paddingHorizontal: 6,
+          borderRadius: 12,
+          marginVertical: 2,
+        },
       }}
     >
       <Drawer.Screen
@@ -65,6 +79,7 @@ const AdminDrawerNavigator = () => {
           ),
         }}
       />
+
       <Drawer.Screen
         name="ProductManagement"
         component={ProductStack}
@@ -75,6 +90,7 @@ const AdminDrawerNavigator = () => {
           ),
         }}
       />
+
       <Drawer.Screen
         name="UserManagement"
         component={UserManagementScreen}
@@ -85,6 +101,7 @@ const AdminDrawerNavigator = () => {
           ),
         }}
       />
+
       <Drawer.Screen
         name="OrderManagement"
         component={OrderStack}
@@ -95,6 +112,7 @@ const AdminDrawerNavigator = () => {
           ),
         }}
       />
+
       <Drawer.Screen
         name="Analytics"
         component={AnalyticsScreen}
@@ -105,6 +123,7 @@ const AdminDrawerNavigator = () => {
           ),
         }}
       />
+
       <Drawer.Screen
         name="Settings"
         component={SettingsScreen}

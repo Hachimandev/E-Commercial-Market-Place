@@ -22,7 +22,7 @@ const OrderDetailScreen = ({ route, navigation }: any) => {
   useEffect(() => {
     const fetchOrderDetail = async () => {
       try {
-        const data = await api.get(`/api/orders/${order.orderId}`);
+        const data = await api.get(`/api/orders/admin/${order.orderId}`);
         setOrderDetails(data);
         console.log("Chi tiết đơn hàng:", data);
       } catch (error: any) {
