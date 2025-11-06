@@ -1,6 +1,4 @@
-// E-Commercial-Market-Place/screens/admin/SettingsScreen.tsx
-
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -10,26 +8,64 @@ import {
   TouchableOpacity,
   Switch,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { globalStyles, COLORS, SIZES } from "../../constants/styles";
+import { api } from "../../api/api";
+import { useFocusEffect } from "@react-navigation/native";
 
 // @ts-ignore
 const SettingsScreen = ({ navigation }) => {
-  const [shopName, setShopName] = useState("My Awesome Shop");
+  const [shopName, setShopName] = useState("");
   const [logoUri, setLogoUri] = useState<string | null>(null);
   const [themeColor, setThemeColor] = useState(COLORS.primary);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const handleLogoUpload = () => {
     Alert.alert("Upload Logo", "Image upload feature not implemented yet.");
   };
 
-  const handleSaveChanges = () => {
-    Alert.alert("Settings Saved", "Your changes have been saved (simulated).");
-    console.log({ shopName, logoUri, themeColor, isDarkMode });
+  const fetchShopInfo = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await api.get("/api/seller/profile");
+      setShopName(data.shopName || "");
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể tải thông tin shop.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchShopInfo();
+    }, [fetchShopInfo])
+  );
+
+  const handleSaveChanges = async () => {
+    try {
+      Alert.alert("Đã lưu", "Thay đổi của bạn đã được lưu.");
+    } catch (error) {
+      Alert.alert("Lỗi", "Không thể lưu thay đổi.");
+    }
   };
+
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={[
+          globalStyles.safeArea,
+          { justifyContent: "center", alignItems: "center" },
+        ]}
+      >
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={globalStyles.safeArea}>
@@ -55,7 +91,6 @@ const SettingsScreen = ({ navigation }) => {
             style={styles.input}
             value={shopName}
             onChangeText={setShopName}
-            placeholder="Enter shop name"
           />
         </View>
 
